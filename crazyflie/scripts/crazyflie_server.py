@@ -24,8 +24,7 @@ from cflib.crazyflie.log import LogConfig
 from crazyflie_interfaces.srv import Takeoff, Land, GoTo, RemoveLogging, AddLogging
 from crazyflie_interfaces.srv import UploadTrajectory, StartTrajectory, NotifySetpointsStop
 from rcl_interfaces.msg import ParameterDescriptor, SetParametersResult, ParameterType
-from crazyflie_interfaces.msg import Hover
-from crazyflie_interfaces.msg import LogDataGeneric
+from crazyflie_interfaces.msg import Hover, LogDataGeneric, FullState
 from motion_capture_tracking_interfaces.msg import NamedPoseArray
 
 from std_srvs.srv import Empty
@@ -245,6 +244,10 @@ class CrazyflieServer(Node):
             self.create_subscription(
                 Hover, name +
                 "/cmd_hover", partial(self._cmd_hover_changed, uri=uri), 10
+            )
+            self.create_subscription(
+                Hover, name +
+                "/cmd_full_state", partial(self._cmd_full_state_changed, uri=uri), 10
             )
             qos_profile = QoSProfile(reliability =QoSReliabilityPolicy.BEST_EFFORT,
                 history=QoSHistoryPolicy.KEEP_LAST,
@@ -846,6 +849,21 @@ class CrazyflieServer(Node):
         self.swarm._cfs[uri].cf.commander.send_hover_setpoint(vx, vy, yawrate, z)
         self.get_logger().info(f"{uri}: Received hover topic {vx} {vy} {yawrate} {z}")
 
+    def _cmd_full_state_changed(self, msg, uri=""):
+        """
+        Topic update callback to full state cmd topic
+        """
+        pos = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
+        vel = [msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z]
+        acc = [msg.acc.x, msg.acc.y, msg.acc.z]
+        q = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+        roll_rate = msg.twist.angular.x
+        pitch_rate =  msg.twist.angular.y
+        yaw_rate = msg.twist.angular.z
+      
+        self.swarm._cfs[uri].cf.commander.send_hover_setpoint(pos, vel, acc, q, roll_rate, pitch_rate, yaw_rate)
+        self.get_logger().info(f"{uri}: Received full state topic {pose} {vel} {acc} {q}, {roll_rate}, {pitch_rate}, {yaw_rate})
+        
     def _remove_logging(self, request, response, uri="all"):
         """
         Service callback to remove logging blocks of the crazyflie
