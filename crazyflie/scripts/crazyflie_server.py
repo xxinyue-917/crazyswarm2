@@ -246,7 +246,7 @@ class CrazyflieServer(Node):
                 "/cmd_hover", partial(self._cmd_hover_changed, uri=uri), 10
             )
             self.create_subscription(
-                Hover, name +
+                FullState, name +
                 "/cmd_full_state", partial(self._cmd_full_state_changed, uri=uri), 10
             )
             qos_profile = QoSProfile(reliability =QoSReliabilityPolicy.BEST_EFFORT,
@@ -861,8 +861,8 @@ class CrazyflieServer(Node):
         pitch_rate =  msg.twist.angular.y
         yaw_rate = msg.twist.angular.z
       
-        self.swarm._cfs[uri].cf.commander.send_hover_setpoint(pos, vel, acc, q, roll_rate, pitch_rate, yaw_rate)
-        self.get_logger().info(f"{uri}: Received full state topic {pose} {vel} {acc} {q}, {roll_rate}, {pitch_rate}, {yaw_rate})
+        self.swarm._cfs[uri].cf.commander.send_full_state_setpoint(pos, vel, acc, q, roll_rate, pitch_rate, yaw_rate)
+        self.get_logger().info(f"{uri}: Received full state topic {pos} {vel} {acc} {q}, {roll_rate}, {pitch_rate}, {yaw_rate}")
         
     def _remove_logging(self, request, response, uri="all"):
         """
