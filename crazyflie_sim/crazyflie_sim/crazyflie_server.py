@@ -326,7 +326,7 @@ class CrazyflieServer(Node):
              msg.pose.orientation.x,
              msg.pose.orientation.y,
              msg.pose.orientation.z]
-        rpy = rowan.to_euler(q)
+        rpy = rowan.to_euler(q, convention='xyz')
 
         self.cfs[name].cmdFullState(
             [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z],
