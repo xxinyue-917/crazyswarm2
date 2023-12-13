@@ -110,9 +110,11 @@ class Quadrotor:
         # to integrate the dynamics, see
         # https://www.ashwinnarayan.com/post/how-to-integrate-quaternions/, and
         # https://arxiv.org/pdf/1604.08139.pdf
+        # Sec 4.5, https://arxiv.org/pdf/1711.02508.pdf
+        omega_global = rowan.rotate(self.state.quat, self.state.omega)
         q_next = rowan.normalize(
             rowan.calculus.integrate(
-                self.state.quat, self.state.omega, dt))
+                self.state.quat, omega_global, dt))
 
         # mJ = Jw x w + tau_u
         omega_next = self.state.omega + (
