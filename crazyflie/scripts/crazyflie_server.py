@@ -946,8 +946,6 @@ class CrazyflieServer(Node):
         yawrate = -1.0*degrees(msg.yaw_rate)
         self.swarm._cfs[uri].cf.commander.send_hover_setpoint(
             vx, vy, yawrate, z)
-        self.get_logger().info(
-            f"{uri}: Received hover topic {vx} {vy} {yawrate} {z}")
 
     def _cmd_full_state_changed(self, msg, uri=""):
         """
@@ -960,9 +958,7 @@ class CrazyflieServer(Node):
         roll_rate = msg.twist.angular.x
         pitch_rate =  msg.twist.angular.y
         yaw_rate = msg.twist.angular.z
-      
         self.swarm._cfs[uri].cf.commander.send_full_state_setpoint(pos, vel, acc, q, roll_rate, pitch_rate, yaw_rate)
-        self.get_logger().info(f"{uri}: Received full state topic {pos} {vel} {acc} {q}, {roll_rate}, {pitch_rate}, {yaw_rate}")
         
     def _remove_logging(self, request, response, uri="all"):
         """
