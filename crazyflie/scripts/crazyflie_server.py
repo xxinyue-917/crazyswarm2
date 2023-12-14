@@ -26,8 +26,7 @@ from cflib.crazyflie.mem import Poly4D
 from crazyflie_interfaces.srv import Takeoff, Land, GoTo, RemoveLogging, AddLogging
 from crazyflie_interfaces.srv import UploadTrajectory, StartTrajectory, NotifySetpointsStop
 from rcl_interfaces.msg import ParameterDescriptor, SetParametersResult, ParameterType
-from crazyflie_interfaces.msg import Hover
-from crazyflie_interfaces.msg import LogDataGeneric
+from crazyflie_interfaces.msg import Hover, LogDataGeneric, FullState
 from motion_capture_tracking_interfaces.msg import NamedPoseArray
 
 from std_srvs.srv import Empty
@@ -259,10 +258,16 @@ class CrazyflieServer(Node):
                 Hover, name +
                 "/cmd_hover", partial(self._cmd_hover_changed, uri=uri), 10
             )
-            qos_profile = QoSProfile(reliability=QoSReliabilityPolicy.BEST_EFFORT,
-                                     history=QoSHistoryPolicy.KEEP_LAST,
-                                     depth=1,
-                                     deadline=Duration(seconds=0, nanoseconds=1e9/100.0))
+
+            self.create_subscription(
+                FullState, name +
+                "/cmd_full_state", partial(self._cmd_full_state_changed, uri=uri), 10
+            )
+            qos_profile = QoSProfile(reliability =QoSReliabilityPolicy.BEST_EFFORT,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=1,
+                deadline = Duration(seconds=0, nanoseconds=1e9/100.0))
+
             self.create_subscription(
                 NamedPoseArray, "/poses",
                 self._poses_changed, qos_profile
@@ -941,9 +946,20 @@ class CrazyflieServer(Node):
         yawrate = -1.0*degrees(msg.yaw_rate)
         self.swarm._cfs[uri].cf.commander.send_hover_setpoint(
             vx, vy, yawrate, z)
-        self.get_logger().info(
-            f"{uri}: Received hover topic {vx} {vy} {yawrate} {z}")
 
+    def _cmd_full_state_changed(self, msg, uri=""):
+        """
+        Topic update callback to full state cmd topic
+        """
+        pos = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
+        vel = [msg.twist.linear.x, msg.twist.linear.y, msg.twist.linear.z]
+        acc = [msg.acc.x, msg.acc.y, msg.acc.z]
+        q = [msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w]
+        roll_rate = msg.twist.angular.x
+        pitch_rate =  msg.twist.angular.y
+        yaw_rate = msg.twist.angular.z
+        self.swarm._cfs[uri].cf.commander.send_full_state_setpoint(pos, vel, acc, q, roll_rate, pitch_rate, yaw_rate)
+        
     def _remove_logging(self, request, response, uri="all"):
         """
         Service callback to remove logging blocks of the crazyflie
