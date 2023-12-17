@@ -39,17 +39,17 @@ jobs:
           source /opt/ros/humble/setup.bash
           . install/local_setup.bash
           export ROS_LOCALHOST_ONLY=1
-          python3 src/crazyswarm2/systemtests/run_test.py
+          python3 src/crazyswarm2/systemtests/test_flights.py
 
       - name: Upload files
         id: step6
+        if: '!cancelled()'
         uses: actions/upload-artifact@v3
         with:
-          name: pdf_bagfiles_and_logs
+          name: pdf_rosbags_and_logs
           path: |
-            ros2_ws/bagfiles
             ros2_ws/results
-            ~/.ros/log
+          
 
 
 

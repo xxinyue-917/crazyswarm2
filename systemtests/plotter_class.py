@@ -4,6 +4,7 @@ import sys
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 from crazyflie_py.uav_trajectory import Trajectory
+from pathlib import Path
 
 
 class Plotter:
@@ -21,9 +22,10 @@ class Plotter:
         self.deviation = [] #list of all indexes where euclidian_distance(ideal - recorded) > EPSILON
 
         self.EPSILON = 0.05 # euclidian distance in [m] between ideal and recorded trajectory under which the drone has to stay to pass the test
-        self.DELAY_CONST_FIG8 = 4.75 #this is the delay constant which I found by adding up all the time.sleep() etc in the figure8.py file. This should be implemented better later
-        self.ALTITUDE_CONST_FIG8 = 1.0 #this is the altitude given for the takeoff in figure8.py. I should find a better solution than a symbolic constant ?
+        self.DELAY_CONST_FIG8 = 4.75 #this is the delay constant which I found by adding up all the time.sleep() etc in the figure8.py file. This could be implemented better later ?
+        self.ALTITUDE_CONST_FIG8 = 1 #this is the altitude given for the takeoff in figure8.py. I should find a better solution than a symbolic constant ?
         self.ALTITUDE_CONST_MULTITRAJ = 1 #takeoff altitude for traj0 in multi_trajectory.py
+        self.X_OFFSET_CONST_MULTITRAJ = -0.3 #offest on the x axis between ideal and real trajectory. Reason: ideal trajectory (traj0.csv) starts with offset of 0.3m and CrazyflieServer.startTrajectory() is relative to start position
 
     def file_guard(self, pdf_path):
         msg = None
@@ -45,18 +47,22 @@ class Plotter:
     def read_csv_and_set_arrays(self, ideal_csvfile, rosbag_csvfile):
         '''Method that reads the csv data of the ideal test trajectory and of the actual recorded trajectory and initializes the attribute arrays'''
 
-        #check which test we are plotting : figure8 or multi_trajectory
-        if("fig8" in rosbag_csvfile):
-            fig8 = True
+        #check which test we are plotting : figure8 or multi_trajectory or another one
+        if("figure8" in rosbag_csvfile):
+            fig8, m_t = True, False
             print("Plotting fig8 test data")
-        else:
-            fig8 = False
+        elif "multi_trajectory" in rosbag_csvfile:
+            fig8, m_t = False, True
             print("Plotting multi_trajectory test data")
+        else:
+            fig8, m_t = False, False
+            print("Plotting unspecified test data")
 
         #get ideal trajectory data
         self.ideal_traj_csv = Trajectory()
         try:
             path_to_ideal_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)),ideal_csvfile)
+            print(path_to_ideal_csv)
             self.ideal_traj_csv.loadcsv(path_to_ideal_csv)
         except FileNotFoundError:
             print("Plotter : File not found " + path_to_ideal_csv)
@@ -93,11 +99,15 @@ class Plotter:
                 pos = [0,0,0]  #for all recorded datapoints who cannot be matched to a corresponding ideal position we assume the drone is on its ground start position (ie those datapoints are before takeoff or after landing)
 
                
-            self.ideal_traj_x[i], self.ideal_traj_y[i]= pos[0], pos[1]
-            if(fig8) :                                                    #special case : in fig8 test no altitude is given in the trajectory polynomials but is stays constant after takeoff in figure8.py
-                self.ideal_traj_z[i] = self.ALTITUDE_CONST_FIG8
-            else :                                                        #for multi_trajectory test the altitude given in the trajectory polynomials is added to the takeoff altitude
-                self.ideal_traj_z[i] = self.ALTITUDE_CONST_MULTITRAJ + pos[2]
+            self.ideal_traj_x[i], self.ideal_traj_y[i], self.ideal_traj_z[i]= pos[0], pos[1], pos[2]
+
+            #special cases 
+            if fig8:                                                                                                         
+                self.ideal_traj_z[i] = self.ALTITUDE_CONST_FIG8                     #special case: in fig8 no altitude is given in the trajectory polynomials  (idealcsv) but is fixed as the takeoff altitude in figure8.py  
+            elif m_t:                                                                   
+                self.ideal_traj_z[i] = pos[2] + self.ALTITUDE_CONST_MULTITRAJ       #for multi_trajectory the altitude given in the trajectory polynomials is added to the fixed takeoff altitude specified in multi_trajectory.py
+                self.ideal_traj_x[i] = pos[0] + self.X_OFFSET_CONST_MULTITRAJ       #the x-axis is offset by 0.3 m because ideal start position not being (0,0,0)
+    
 
             self.euclidian_dist[i] = np.linalg.norm([self.ideal_traj_x[i]-self.bag_x[i], 
                                                 self.ideal_traj_y[i]-self.bag_y[i], self.ideal_traj_z[i]-self.bag_z[i]])
@@ -341,3 +351,5 @@ if __name__=="__main__":
     if args.open:
         import subprocess
         subprocess.call(["xdg-open", args.pdf])
+        
+        
