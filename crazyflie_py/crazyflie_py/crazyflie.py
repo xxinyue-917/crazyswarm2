@@ -389,7 +389,11 @@ class Crazyflie:
         req.trajectory_id = trajectoryId
         req.piece_offset = pieceOffset
         req.pieces = pieces
-        self.uploadTrajectoryService.call_async(req)
+        future = self.uploadTrajectoryService.call_async(req)
+        while rclpy.ok():
+            rclpy.spin_once(self.node)
+            if future.done():
+                break
 
     def startTrajectory(self, trajectoryId,
                         timescale=1.0, reverse=False,
