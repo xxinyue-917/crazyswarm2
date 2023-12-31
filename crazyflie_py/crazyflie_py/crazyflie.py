@@ -114,8 +114,6 @@ class Crazyflie:
 
         # self.tf = tf
 
-        # rospy.wait_for_service(prefix + '/set_group_mask')
-        # self.setGroupMaskService = rospy.ServiceProxy(prefix + '/set_group_mask', SetGroupMask)
         self.emergencyService = node.create_client(Empty, prefix + '/emergency')
         self.emergencyService.wait_for_service()
         self.takeoffService = node.create_client(Takeoff, prefix + '/takeoff')
@@ -186,29 +184,37 @@ class Crazyflie:
         # self.cmdVelocityWorldMsg.header.seq = 0
         # self.cmdVelocityWorldMsg.header.frame_id = '/world'
 
-    # def setGroupMask(self, groupMask):
-    #     """Sets the group mask bits for this robot.
+    def setGroupMask(self, groupMask):
+        """
+        Set the group mask bits for this robot.
 
-    #     The purpose of groups is to make it possible to trigger an action
-    #     (for example, executing a previously-uploaded trajectory) on a subset
-    #     of all robots without needing to send more than one radio packet.
-    #     This is important to achieve tight, synchronized 'choreography'.
+        The purpose of groups is to make it possible to trigger an action
+        (for example, executing a previously-uploaded trajectory) on a subset
+        of all robots without needing to send more than one radio packet.
+        This is important to achieve tight, synchronized 'choreography'.
 
-    #     Up to 8 groups may exist, corresponding to bits in the groupMask byte.
-    #     When a broadcast command is triggered on the :obj:`CrazyflieServer` object
-    #     with a groupMask argument, the command only affects those robots whose
-    #     groupMask has a nonzero bitwise-AND with the command's groupMask.
-    #     A command with a groupMask of zero applies to all robots regardless of
-    #     group membership.
+        Up to 8 groups may exist, corresponding to bits in the groupMask byte.
+        When a broadcast command is triggered on the :obj:`CrazyflieServer` object
+        with a groupMask argument, the command only affects those robots whose
+        groupMask has a nonzero bitwise-AND with the command's groupMask.
+        A command with a groupMask of zero applies to all robots regardless of
+        group membership.
 
-    #     Some individual robot (not broadcast) commands also support groupMask,
-    #     but it is not especially useful in that case.
+        Some individual robot (not broadcast) commands also support groupMask,
+        but it is not especially useful in that case.
 
-    #     Args:
-    #         groupMask (int): An 8-bit integer representing this robot's
-    #             membership status in each of the <= 8 possible groups.
-    #     """
-    #     self.setGroupMaskService(groupMask)
+        Args:
+        ----
+            groupMask (int): An 8-bit integer representing this robot's
+                membership status in each of the <= 8 possible groups.
+
+        """
+        # Note that this requires a recent firmware; older firmware versions
+        #      do not have such a parameter.
+        try:
+            self.setParam('hlCommander.groupmask', groupMask)
+        except KeyError:
+            self.node.get_logger().error('setGroupMask: Your firmware is too old - Please update.')
 
     # def enableCollisionAvoidance(self, others, ellipsoidRadii):
     #     """Enables onboard collision avoidance.
