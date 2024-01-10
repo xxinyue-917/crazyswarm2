@@ -40,7 +40,7 @@ class Visualization:
 
                 # position
                 fig, axs = plt.subplots(3, 1, sharex=True)
-                fig.suptitle(name + " position")
+                fig.suptitle(name + ' position')
                 axs[0].set_ylabel('px [m]')
                 axs[1].set_ylabel('py [m]')
                 axs[2].set_ylabel('pz [m]')
@@ -55,7 +55,7 @@ class Visualization:
 
                 # velocity
                 fig, axs = plt.subplots(3, 1, sharex=True)
-                fig.suptitle(name + " velocity")
+                fig.suptitle(name + ' velocity')
                 axs[0].set_ylabel('vx [m/s]')
                 axs[1].set_ylabel('vy [m/s]')
                 axs[2].set_ylabel('vz [m/s]')
@@ -70,7 +70,7 @@ class Visualization:
 
                 # orientation
                 fig, axs = plt.subplots(3, 1, sharex=True)
-                fig.suptitle(name + " orientation")
+                fig.suptitle(name + ' orientation')
                 axs[0].set_ylabel('roll [deg]')
                 axs[1].set_ylabel('pitch [deg]')
                 axs[2].set_ylabel('yaw [deg]')
@@ -89,7 +89,7 @@ class Visualization:
 
                 # omega
                 fig, axs = plt.subplots(3, 1, sharex=True)
-                fig.suptitle(name + " angular velocity")
+                fig.suptitle(name + ' angular velocity')
                 axs[0].set_ylabel('wx [deg/s]')
                 axs[1].set_ylabel('wy [deg/s]')
                 axs[2].set_ylabel('wz [deg/s]')
@@ -104,7 +104,7 @@ class Visualization:
 
                 # actions
                 fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
-                fig.suptitle(name + " motor actions")
+                fig.suptitle(name + ' motor actions')
                 axs[0, 0].set_ylabel('rpm')
                 axs[1, 0].set_ylabel('rpm')
                 axs[1, 0].set_xlabel('Time [s]')
