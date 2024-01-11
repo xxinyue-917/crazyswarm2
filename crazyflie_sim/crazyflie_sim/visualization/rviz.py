@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
 from tf2_ros import TransformBroadcaster
@@ -20,7 +22,8 @@ class Visualization:
         msgs = []
         for name, state in zip(self.names, states):
             msg = TransformStamped()
-            msg.header.stamp = self.node.get_clock().now().to_msg()
+            msg.header.stamp.sec = math.floor(t)
+            msg.header.stamp.nanosec = int((t - msg.header.stamp.sec) * 1e9)
             msg.header.frame_id = 'world'
             msg.child_frame_id = name
             msg.transform.translation.x = state.pos[0]
