@@ -30,17 +30,17 @@ class Visualization:
         self.all_actions.append(copy.deepcopy(actions))
 
     def shutdown(self):
+        with PdfPages(self.filename) as pdf:
 
-        for k, name in enumerate(self.names):
+            for k, name in enumerate(self.names):
 
-            cf_states = np.array([s[k]._state for s in self.all_states])
-            cf_states_desired = np.array([s[k]._state for s in self.all_states_desired])
-            cf_actions = np.array([s[k]._action for s in self.all_actions])
-
-            with PdfPages(self.filename) as pdf:
+                cf_states = np.array([s[k]._state for s in self.all_states])
+                cf_states_desired = np.array([s[k]._state for s in self.all_states_desired])
+                cf_actions = np.array([s[k]._action for s in self.all_actions])
 
                 # position
                 fig, axs = plt.subplots(3, 1, sharex=True)
+                fig.suptitle(name + ' position')
                 axs[0].set_ylabel('px [m]')
                 axs[1].set_ylabel('py [m]')
                 axs[2].set_ylabel('pz [m]')
@@ -55,6 +55,7 @@ class Visualization:
 
                 # velocity
                 fig, axs = plt.subplots(3, 1, sharex=True)
+                fig.suptitle(name + ' velocity')
                 axs[0].set_ylabel('vx [m/s]')
                 axs[1].set_ylabel('vy [m/s]')
                 axs[2].set_ylabel('vz [m/s]')
@@ -69,6 +70,7 @@ class Visualization:
 
                 # orientation
                 fig, axs = plt.subplots(3, 1, sharex=True)
+                fig.suptitle(name + ' orientation')
                 axs[0].set_ylabel('roll [deg]')
                 axs[1].set_ylabel('pitch [deg]')
                 axs[2].set_ylabel('yaw [deg]')
@@ -87,6 +89,7 @@ class Visualization:
 
                 # omega
                 fig, axs = plt.subplots(3, 1, sharex=True)
+                fig.suptitle(name + ' angular velocity')
                 axs[0].set_ylabel('wx [deg/s]')
                 axs[1].set_ylabel('wy [deg/s]')
                 axs[2].set_ylabel('wz [deg/s]')
@@ -101,6 +104,7 @@ class Visualization:
 
                 # actions
                 fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
+                fig.suptitle(name + ' motor actions')
                 axs[0, 0].set_ylabel('rpm')
                 axs[1, 0].set_ylabel('rpm')
                 axs[1, 0].set_xlabel('Time [s]')
