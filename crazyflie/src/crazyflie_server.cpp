@@ -21,6 +21,7 @@
 #include "crazyflie_interfaces/msg/full_state.hpp"
 #include "crazyflie_interfaces/msg/position.hpp"
 #include "crazyflie_interfaces/msg/log_data_generic.hpp"
+#include "crazyflie_interfaces/msg/connection_statistics_array.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -151,6 +152,11 @@ public:
     // link statistics
     warning_freq_ = node->get_parameter("warnings.frequency").get_parameter_value().get<float>();
     max_latency_ = node->get_parameter("warnings.communication.max_unicast_latency").get_parameter_value().get<float>();
+    min_ack_rate_ = node->get_parameter("warnings.communication.min_unicast_ack_rate").get_parameter_value().get<float>();
+    publish_stats_ = node->get_parameter("warnings.communication.publish_stats").get_parameter_value().get<bool>();
+    if (publish_stats_) {
+      publisher_connection_stats_ = node->create_publisher<crazyflie_interfaces::msg::ConnectionStatisticsArray>(name + "/connection_statistics", 10);
+    }
 
     if (warning_freq_ >= 0.0) {
       cf_.setLatencyCallback(std::bind(&CrazyflieROS::on_latency, this, std::placeholders::_1));
@@ -706,12 +712,34 @@ private:
     if (elapsed.count() > 1.0 / warning_freq_) {
       RCLCPP_WARN(logger_, "last latency update: %f s", elapsed.count());
     }
+
+    auto stats = cf_.connectionStatsDelta();
+    float ack_rate = stats.sent_count / stats.ack_count;
+    if (ack_rate < min_ack_rate_) {
+      RCLCPP_WARN(logger_, "Ack rate: %.1f %%", ack_rate * 100);
+    }
+
+    if (publish_stats_) {
+      crazyflie_interfaces::msg::ConnectionStatisticsArray msg;
+      msg.header.stamp = node_->get_clock()->now();
+      msg.header.frame_id = "world";
+      msg.stats.resize(1);
+
+      msg.stats[0].uri = cf_.uri();
+      msg.stats[0].sent_count = stats.sent_count;
+      msg.stats[0].sent_ping_count = stats.sent_ping_count;
+      msg.stats[0].receive_count = stats.receive_count;
+      msg.stats[0].enqueued_count = stats.enqueued_count;
+      msg.stats[0].ack_count = stats.ack_count;
+
+      publisher_connection_stats_->publish(msg);
+    }
   }
 
   void on_latency(uint64_t latency_in_us)
   {
     if (latency_in_us / 1000.0 > max_latency_) {
-      RCLCPP_WARN(logger_, "Latency: %f ms", latency_in_us / 1000.0);
+      RCLCPP_WARN(logger_, "Latency: %.1f ms", latency_in_us / 1000.0);
     }
     last_on_latency_ = std::chrono::steady_clock::now();
   }
@@ -758,7 +786,9 @@ private:
   std::chrono::time_point<std::chrono::steady_clock> last_on_latency_;
   float warning_freq_;
   float max_latency_;
-
+  float min_ack_rate_;
+  bool publish_stats_;
+  rclcpp::Publisher<crazyflie_interfaces::msg::ConnectionStatisticsArray>::SharedPtr publisher_connection_stats_;
 };
 
 class CrazyflieServer : public rclcpp::Node
@@ -822,6 +852,13 @@ public:
     mocap_max_rate_ = rate_range[1];
 
     this->declare_parameter("warnings.communication.max_unicast_latency", 10.0);
+    this->declare_parameter("warnings.communication.min_unicast_ack_rate", 0.9);
+    this->declare_parameter("warnings.communication.publish_stats", false);
+
+    publish_stats_ = this->get_parameter("warnings.communication.publish_stats").get_parameter_value().get<bool>();
+    if (publish_stats_) {
+      publisher_connection_stats_ = this->create_publisher<crazyflie_interfaces::msg::ConnectionStatisticsArray>("all/connection_statistics", 10);
+    }
 
     // load crazyflies from params
     auto node_parameters_iface = this->get_node_parameters_interface();
@@ -1160,7 +1197,7 @@ private:
       mean_rate /= (mocap_data_received_timepoints_.size() - 1);
 
       if (num_rates_wrong > 0) {
-        RCLCPP_WARN(logger_, "Motion capture rate off (#: %d, Avg: %f)", num_rates_wrong, mean_rate);
+        RCLCPP_WARN(logger_, "Motion capture rate off (#: %d, Avg: %.1f)", num_rates_wrong, mean_rate);
       }
     } else if (mocap_enabled_) {
       // b) warn if no data was received
@@ -1168,6 +1205,30 @@ private:
     }
 
     mocap_data_received_timepoints_.clear();
+
+    if (publish_stats_) {
+
+      crazyflie_interfaces::msg::ConnectionStatisticsArray msg;
+      msg.header.stamp = this->get_clock()->now();
+      msg.header.frame_id = "world";
+      msg.stats.resize(broadcaster_.size());
+
+      size_t i = 0;
+      for (auto &bc : broadcaster_) {
+        auto &cfbc = bc.second;
+
+        auto stats = cfbc->connectionStatsDelta();
+
+        msg.stats[i].uri = cfbc->uri();
+        msg.stats[i].sent_count = stats.sent_count;
+        msg.stats[i].sent_ping_count = stats.sent_ping_count;
+        msg.stats[i].receive_count = stats.receive_count;
+        msg.stats[i].enqueued_count = stats.enqueued_count;
+        msg.stats[i].ack_count = stats.ack_count;
+        ++i;
+      }
+      publisher_connection_stats_->publish(msg);
+    }
   }
 
   template<class T>
@@ -1232,6 +1293,8 @@ private:
     float mocap_min_rate_;
     float mocap_max_rate_;
     std::vector<std::chrono::time_point<std::chrono::steady_clock>> mocap_data_received_timepoints_;
+    bool publish_stats_;
+    rclcpp::Publisher<crazyflie_interfaces::msg::ConnectionStatisticsArray>::SharedPtr publisher_connection_stats_;
 
     // multithreading
     rclcpp::CallbackGroup::SharedPtr callback_group_mocap_;
