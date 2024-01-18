@@ -6,6 +6,8 @@
         warning_if_rate_outside: [80.0, 120.0]
       communication:
         max_unicast_latency: 10.0 # ms
+        min_unicast_ack_rate: 0.9
+        publish_stats: false
     firmware_params:
       query_all_values_on_connect: False
     # simulation related
