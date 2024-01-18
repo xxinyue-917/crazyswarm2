@@ -1,4 +1,4 @@
-from __future__ import annotations
+from pathlib import Path
 
 import numpy as np
 from rclpy.node import Node
@@ -85,7 +85,7 @@ class Quadrotor:
 
     def __init__(self, state):
         self.uav = robot_python.robot_factory(
-            '/home/whoenig/projects/dynobench/models/quad3d_v0.yaml', [], [])
+            str((Path(__file__).parent / 'data/dynobench/crazyflie2.yaml').resolve()), [], [])
         self.state = state
 
     def step(self, action, dt):
@@ -96,8 +96,6 @@ class Quadrotor:
         normalized_force = force_in_newton / (1.3 * (0.034 / 4) * 9.81)
 
         xnext = np.zeros(13)
-        # print(sim_state2dynobench_state(self.state))
-        print(normalized_force)
         self.uav.step(xnext, sim_state2dynobench_state(self.state), normalized_force, dt)
         self.state = dynobench_state2sim_state(xnext)
 
