@@ -19,6 +19,11 @@ Usage
     .. code-block:: bash
 
         export ROS_LOCALHOST_ONLY=1
+        export ROS_DOMAIN_ID=<unique number between 0 and 101>
+
+    The first environment variable restricts ROS to your local machine. The second is useful
+    if you have multiple user accounts on the same machine (e.g., a shared workstation computer).
+    In such case, each user should use a unique `domain ID <https://docs.ros.org/en/iron/Concepts/Intermediate/About-Domain-ID.html>`_.
 
 
 Configuration
