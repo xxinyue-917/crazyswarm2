@@ -112,10 +112,11 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# Install launch and config files.
+# Install launch, config, and urdf files.
 install(DIRECTORY
   launch
   config
+  urdf
   DESTINATION share/${PROJECT_NAME}/
 )
 

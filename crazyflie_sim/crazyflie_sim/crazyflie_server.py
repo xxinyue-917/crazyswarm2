@@ -16,6 +16,7 @@ from geometry_msgs.msg import Twist
 import rclpy
 from rclpy.node import Node
 import rowan
+from std_msgs.msg import String
 from std_srvs.srv import Empty
 
 
@@ -100,6 +101,17 @@ class CrazyflieServer(Node):
                             self._start_trajectory_callback)
 
         for name, _ in self.cfs.items():
+            pub = self.create_publisher(
+                    String,
+                    name + '/robot_description',
+                    rclpy.qos.QoSProfile(
+                        depth=1,
+                        durability=rclpy.qos.QoSDurabilityPolicy.TRANSIENT_LOCAL))
+
+            msg = String()
+            msg.data = self._ros_parameters['robot_description'].replace('$NAME', name)
+            pub.publish(msg)
+
             self.create_service(
                 Empty,
                 name + '/emergency',

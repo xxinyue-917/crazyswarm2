@@ -30,6 +30,15 @@ def generate_launch_description():
 
     server_params = [crazyflies] + [server_yaml_contents["/crazyflie_server"]["ros__parameters"]]
 
+    # robot description
+    urdf = os.path.join(
+        get_package_share_directory('crazyflie'),
+        'urdf',
+        'crazyflie_description.urdf')
+    with open(urdf, 'r') as f:
+        robot_desc = f.read()
+    server_params[1]["robot_description"] = robot_desc
+
     # construct motion_capture_configuration
     motion_capture_yaml = os.path.join(
         get_package_share_directory('crazyflie'),

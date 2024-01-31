@@ -30,6 +30,7 @@ from crazyflie_interfaces.msg import Hover, LogDataGeneric, FullState
 from motion_capture_tracking_interfaces.msg import NamedPoseArray
 
 from std_srvs.srv import Empty
+from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from sensor_msgs.msg import LaserScan
@@ -220,6 +221,16 @@ class CrazyflieServer(Node):
 
         for uri in self.cf_dict:
             name = self.cf_dict[uri]
+
+            pub = self.create_publisher(String, name + '/robot_description',
+            rclpy.qos.QoSProfile(
+                depth=1,
+                durability=rclpy.qos.QoSDurabilityPolicy.TRANSIENT_LOCAL))
+
+            msg = String()
+            msg.data = self._ros_parameters['robot_description'].replace("$NAME", name)
+            pub.publish(msg)
+
             self.create_service(
                 Empty, name +
                 "/emergency", partial(self._emergency_callback, uri=uri)
