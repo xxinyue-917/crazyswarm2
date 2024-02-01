@@ -181,6 +181,8 @@ public:
     warning_freq_ = node->get_parameter("warnings.frequency").get_parameter_value().get<float>();
     max_latency_ = node->get_parameter("warnings.communication.max_unicast_latency").get_parameter_value().get<float>();
     min_ack_rate_ = node->get_parameter("warnings.communication.min_unicast_ack_rate").get_parameter_value().get<float>();
+    min_unicast_receive_rate_ = node->get_parameter("warnings.communication.min_unicast_receive_rate").get_parameter_value().get<float>();
+    min_broadcast_receive_rate_ = node->get_parameter("warnings.communication.min_broadcast_receive_rate").get_parameter_value().get<float>();
     publish_stats_ = node->get_parameter("warnings.communication.publish_stats").get_parameter_value().get<bool>();
     if (publish_stats_) {
       publisher_connection_stats_ = node->create_publisher<crazyflie_interfaces::msg::ConnectionStatisticsArray>(name + "/connection_statistics", 10);
@@ -801,6 +803,27 @@ private:
       previous_stats_broadcast_ = statsBc;
 
       publisher_status_->publish(msg);
+
+      // warnings
+      if (msg.num_rx_unicast > msg.num_tx_unicast) {
+        RCLCPP_WARN(logger_, "Unexpected number of unicast packets. Sent: %d. Received: %d", msg.num_tx_unicast, msg.num_rx_unicast);
+      }
+      if (msg.num_tx_unicast > 0) {
+        float unicast_receive_rate = msg.num_rx_unicast / (float)msg.num_tx_unicast;
+        if (unicast_receive_rate < min_unicast_receive_rate_) {
+          RCLCPP_WARN(logger_, "Low unicast receive rate (%.2f < %.2f). Sent: %d. Received: %d", unicast_receive_rate, min_unicast_receive_rate_, msg.num_tx_unicast, msg.num_rx_unicast);
+        }
+      }
+
+      if (msg.num_rx_broadcast > msg.num_tx_broadcast) {
+        RCLCPP_WARN(logger_, "Unexpected number of broadcast packets. Sent: %d. Received: %d", msg.num_tx_broadcast, msg.num_rx_broadcast);
+      }
+      if (msg.num_tx_broadcast > 0) {
+        float broadcast_receive_rate = msg.num_rx_broadcast / (float)msg.num_tx_broadcast;
+        if (broadcast_receive_rate < min_broadcast_receive_rate_) {
+          RCLCPP_WARN(logger_, "Low broadcast receive rate (%.2f < %.2f). Sent: %d. Received: %d", broadcast_receive_rate, min_broadcast_receive_rate_, msg.num_tx_broadcast, msg.num_rx_broadcast);
+        }
+      }
     }
   }
 
@@ -912,6 +935,8 @@ private:
   float warning_freq_;
   float max_latency_;
   float min_ack_rate_;
+  float min_unicast_receive_rate_;
+  float min_broadcast_receive_rate_;
   bool publish_stats_;
   rclcpp::Publisher<crazyflie_interfaces::msg::ConnectionStatisticsArray>::SharedPtr publisher_connection_stats_;
 };
@@ -980,6 +1005,8 @@ public:
 
     this->declare_parameter("warnings.communication.max_unicast_latency", 10.0);
     this->declare_parameter("warnings.communication.min_unicast_ack_rate", 0.9);
+    this->declare_parameter("warnings.communication.min_unicast_receive_rate", 0.9);
+    this->declare_parameter("warnings.communication.min_broadcast_receive_rate", 0.9);
     this->declare_parameter("warnings.communication.publish_stats", false);
 
     publish_stats_ = this->get_parameter("warnings.communication.publish_stats").get_parameter_value().get<bool>();

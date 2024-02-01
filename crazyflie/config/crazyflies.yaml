@@ -77,6 +77,8 @@ all:
      # remove to disable default topic
       pose:
         frequency: 10 # Hz
+      status:
+        frequency: 1 # Hz
     #custom_topics:
     #  topic_name1:
     #    frequency: 10 # Hz
