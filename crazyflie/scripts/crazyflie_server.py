@@ -26,7 +26,7 @@ from cflib.crazyflie.mem import Poly4D
 from crazyflie_interfaces.srv import Takeoff, Land, GoTo, RemoveLogging, AddLogging
 from crazyflie_interfaces.srv import UploadTrajectory, StartTrajectory, NotifySetpointsStop
 from rcl_interfaces.msg import ParameterDescriptor, SetParametersResult, ParameterType
-from crazyflie_interfaces.msg import Hover, LogDataGeneric, FullState
+from crazyflie_interfaces.msg import Status, Hover, LogDataGeneric, FullState
 from motion_capture_tracking_interfaces.msg import NamedPoseArray
 
 from std_srvs.srv import Empty
@@ -74,17 +74,21 @@ class CrazyflieServer(Node):
         # Assign default topic types, variables and callbacks
         self.default_log_type = {"pose": PoseStamped,
                                  "scan": LaserScan,
-                                 "odom": Odometry}
+                                 "odom": Odometry,
+                                 "status": Status}
         self.default_log_vars = {"pose": ['stateEstimate.x', 'stateEstimate.y', 'stateEstimate.z',
                                           'stabilizer.roll', 'stabilizer.pitch', 'stabilizer.yaw'],
                                  "scan": ['range.front', 'range.left', 'range.back', 'range.right'],
                                  "odom": ['stateEstimate.x', 'stateEstimate.y', 'stateEstimate.z',
                                           'stabilizer.yaw', 'stabilizer.roll', 'stabilizer.pitch',
                                           'kalman.statePX', 'kalman.statePY', 'kalman.statePZ',
-                                          'gyro.z', 'gyro.x', 'gyro.y']}
+                                          'gyro.z', 'gyro.x', 'gyro.y'],
+                                 "status": ['supervisor.info', 'pm.vbatMV', 'pm.state',
+                                          'radio.rssi']}
         self.default_log_fnc = {"pose": self._log_pose_data_callback,
                                 "scan": self._log_scan_data_callback,
-                                "odom": self._log_odom_data_callback}
+                                "odom": self._log_odom_data_callback,
+                                "status": self._log_status_data_callback}
 
         self.world_tf_name = "world"
         try:
@@ -568,6 +572,21 @@ class CrazyflieServer(Node):
         t_base.transform.rotation.z = q[2]
         t_base.transform.rotation.w = q[3]
         self.tfbr.sendTransform(t_base)
+
+    def _log_status_data_callback(self, timestamp, data, logconf, uri):
+        """
+        Send out the ROS 2 status topic
+        """
+
+        msg = Status()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = self.world_tf_name
+        msg.supervisor_info = data.get('supervisor.info')
+        msg.battery_voltage = data.get('pm.vbatMV') / 1000.0
+        msg.pm_state = data.get('pm.state')
+        msg.rssi = data.get('radio.rssi')
+
+        self.swarm._cfs[uri].logging["status_publisher"].publish(msg)
 
     def _log_custom_data_callback(self, timestamp, data, logconf, uri):
         """
