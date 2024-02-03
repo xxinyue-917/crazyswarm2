@@ -210,7 +210,7 @@ class CrazyflieServer(Node):
         return tree
 
     def _emergency_callback(self, request, response, name='all'):
-        self.get_logger().info('emergency not yet implemented')
+        self.get_logger().info(f'[{name}] emergency not yet implemented')
 
         return response
 
@@ -219,9 +219,9 @@ class CrazyflieServer(Node):
         duration = float(request.duration.sec) + \
             float(request.duration.nanosec / 1e9)
         self.get_logger().info(
-            f'takeoff(height={request.height} m,'
+            f'[{name}] takeoff(height={request.height} m,'
             + f'duration={duration} s,'
-            + f'group_mask={request.group_mask}) {name}'
+            + f'group_mask={request.group_mask})'
         )
         cfs = self.cfs if name == 'all' else {name: self.cfs[name]}
         for _, cf in cfs.items():
@@ -234,7 +234,7 @@ class CrazyflieServer(Node):
         duration = float(request.duration.sec) + \
             float(request.duration.nanosec / 1e9)
         self.get_logger().info(
-            f'land(height={request.height} m,'
+            f'[{name}] land(height={request.height} m,'
             + f'duration={duration} s,'
             + f'group_mask={request.group_mask})'
         )
@@ -250,8 +250,9 @@ class CrazyflieServer(Node):
             float(request.duration.nanosec / 1e9)
 
         self.get_logger().info(
-            'go_to(position=%f,%f,%f m, yaw=%f rad, duration=%f s, relative=%d, group_mask=%d)'
+            '[%s] go_to(position=%f,%f,%f m, yaw=%f rad, duration=%f s, relative=%d, group_mask=%d)'
             % (
+                name,
                 request.goal.x,
                 request.goal.y,
                 request.goal.z,
@@ -269,11 +270,11 @@ class CrazyflieServer(Node):
         return response
 
     def _notify_setpoints_stop_callback(self, request, response, name='all'):
-        self.get_logger().info('Notify setpoint stop not yet implemented')
+        self.get_logger().info(f'[{name}] Notify setpoint stop not yet implemented')
         return response
 
     def _upload_trajectory_callback(self, request, response, name='all'):
-        self.get_logger().info('Upload trajectory(id=%d)' % (request.trajectory_id))
+        self.get_logger().info('[%s] Upload trajectory(id=%d)' % (name, request.trajectory_id))
 
         cfs = self.cfs if name == 'all' else {name: self.cfs[name]}
         for _, cf in cfs.items():
@@ -297,8 +298,9 @@ class CrazyflieServer(Node):
 
     def _start_trajectory_callback(self, request, response, name='all'):
         self.get_logger().info(
-            'start_trajectory(id=%d, timescale=%f, reverse=%d, relative=%d, group_mask=%d)'
+            '[%s] start_trajectory(id=%d, timescale=%f, reverse=%d, relative=%d, group_mask=%d)'
             % (
+                name,
                 request.trajectory_id,
                 request.timescale,
                 request.reversed,
