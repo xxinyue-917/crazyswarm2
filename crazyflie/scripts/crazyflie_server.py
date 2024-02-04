@@ -67,7 +67,10 @@ class CrazyflieServer(Node):
         self._ros_parameters = self._param_to_dict(self._parameters)
 
         self.uris = []
-        self.cf_dict = {}
+        # for logging, assign a all -> all mapping
+        self.cf_dict = {
+            'all': 'all'
+        }
         self.uri_dict = {}
         self.type_dict = {}
 
@@ -224,6 +227,9 @@ class CrazyflieServer(Node):
             StartTrajectory, "all/start_trajectory", self._start_trajectory_callback)
 
         for uri in self.cf_dict:
+            if uri == "all":
+                continue
+
             name = self.cf_dict[uri]
 
             pub = self.create_publisher(String, name + '/robot_description',
@@ -354,7 +360,7 @@ class CrazyflieServer(Node):
         Called when all parameters have been updated
           and the full log toc has been received of the Crazyflie
         """
-        self.get_logger().info(f" {link_uri} is fully connected!")
+        self.get_logger().info(f"[{self.cf_dict[link_uri]}] is fully connected!")
 
         self.swarm.fully_connected_crazyflie_cnt += 1
 
@@ -367,10 +373,10 @@ class CrazyflieServer(Node):
             return
 
     def _disconnected(self, link_uri):
-        self.get_logger().info(f" {link_uri} is disconnected!")
+        self.get_logger().info(f"[{self.cf_dict[link_uri]}] is disconnected!")
 
     def _connection_failed(self, link_uri, msg):
-        self.get_logger().info(f"{link_uri} connection Failed")
+        self.get_logger().info(f"[{self.cf_dict[link_uri]}] connection Failed")
         self.swarm.close_links()
 
     def _init_logging(self):
@@ -406,20 +412,20 @@ class CrazyflieServer(Node):
                             self._log_error_callback)
                         lg_custom.start()
                     except KeyError as e:
-                        self.get_logger().info(f'{link_uri}: Could not start log configuration,'
+                        self.get_logger().info(f'[{self.cf_dict[link_uri]}] Could not start log configuration,'
                                                '{} not found in TOC'.format(str(e)))
                     except AttributeError:
                         self.get_logger().info(
-                            f'{link_uri}: Could not add log config, bad configuration.')
+                            f'[{self.cf_dict[link_uri]}] Could not add log config, bad configuration.')
 
-                self.get_logger().info(f"{link_uri} setup custom logging")
+                self.get_logger().info(f"[{self.cf_dict[link_uri]}] setup custom logging")
 
             self.create_service(
                 RemoveLogging, self.cf_dict[link_uri] + "/remove_logging", partial(self._remove_logging, uri=link_uri))
             self.create_service(
                 AddLogging, self.cf_dict[link_uri] + "/add_logging", partial(self._add_logging, uri=link_uri))
 
-        self.get_logger().info("All Crazyflies loggging are initialized")
+        self.get_logger().info("All Crazyflies logging are initialized.")
 
     def _init_default_logging(self, prefix, link_uri, callback_fnc):
         """
@@ -438,13 +444,13 @@ class CrazyflieServer(Node):
             self.declare_parameter(
                 self.cf_dict[link_uri] + ".logs." + prefix + ".frequency.", frequency)
             self.get_logger().info(
-                f"{link_uri} setup logging for {prefix} at freq {frequency}")
+                f"[{self.cf_dict[link_uri]}] setup logging for {prefix} at freq {frequency}")
         except KeyError as e:
-            self.get_logger().info(f'{link_uri}: Could not start log configuration,'
+            self.get_logger().error(f'[{self.cf_dict[link_uri]}] Could not start log configuration,'
                                    '{} not found in TOC'.format(str(e)))
         except AttributeError:
-            self.get_logger().info(
-                f'{link_uri}: Could not add log config, bad configuration.')
+            self.get_logger().error(
+                f'[{self.cf_dict[link_uri]}] Could not add log config, bad configuration.')
 
     def _log_scan_data_callback(self, timestamp, data, logconf, uri):
         """
@@ -652,7 +658,7 @@ class CrazyflieServer(Node):
                         #       crazyflie with get_value due to threading.
                         cf.param.set_value(name, set_param_value)
                         self.get_logger().info(
-                            f" {link_uri}: {name} is set to {set_param_value}"
+                            f"[{self.cf_dict[link_uri]}] {name} is set to {set_param_value}"
                         )
                         self.declare_parameter(
                             self.cf_dict[link_uri] +
@@ -691,7 +697,7 @@ class CrazyflieServer(Node):
             # Now all parameters are set
             set_param_all = True
 
-        self.get_logger().info("All Crazyflies parameters are initialized")
+        self.get_logger().info("All Crazyflies parameters are initialized.")
 
     def _parameters_callback(self, params):
         """
@@ -710,7 +716,7 @@ class CrazyflieServer(Node):
                             name_param, param.value
                         )
                         self.get_logger().info(
-                            f" {self.uri_dict[cf_name]}: {name_param} is set to {param.value}"
+                            f"[{self.uri_dict[cf_name]}] {name_param} is set to {param.value}"
                         )
                         return SetParametersResult(successful=True)
                     except Exception as e:
@@ -727,7 +733,7 @@ class CrazyflieServer(Node):
                                 name_param, param.value
                             )
                         self.get_logger().info(
-                            f" {link_uri}: {name_param} is set to {param.value}"
+                            f"[{self.cf_dict[link_uri]}] {name_param} is set to {param.value}"
                         )
                         return SetParametersResult(successful=True)
                     except Exception as e:
@@ -751,12 +757,14 @@ class CrazyflieServer(Node):
             a certain height in high level commander
         """
 
+        print("call1 ", uri)
+
         duration = float(request.duration.sec) + \
             float(request.duration.nanosec / 1e9)
         self.get_logger().info(
-            f"takeoff(height={request.height} m,"
+            f"[{self.cf_dict[uri]}] takeoff(height={request.height} m,"
             + f"duration={duration} s,"
-            + f"group_mask={request.group_mask}) {uri}"
+            + f"group_mask={request.group_mask})"
         )
         if uri == "all":
             for link_uri in self.uris:
@@ -778,7 +786,7 @@ class CrazyflieServer(Node):
         duration = float(request.duration.sec) + \
             float(request.duration.nanosec / 1e9)
         self.get_logger().info(
-            f"land(height={request.height} m,"
+            f"[{self.cf_dict[uri]}] land(height={request.height} m,"
             + f"duration={duration} s,"
             + f"group_mask={request.group_mask})"
         )
@@ -803,8 +811,9 @@ class CrazyflieServer(Node):
             float(request.duration.nanosec / 1e9)
 
         self.get_logger().info(
-            "go_to(position=%f,%f,%f m, yaw=%f rad, duration=%f s, relative=%d, group_mask=%d)"
+            "[%s] go_to(position=%f,%f,%f m, yaw=%f rad, duration=%f s, relative=%d, group_mask=%d)"
             % (
+                self.cf_dict[uri],
                 request.goal.x,
                 request.goal.y,
                 request.goal.z,
@@ -839,7 +848,7 @@ class CrazyflieServer(Node):
 
     def _notify_setpoints_stop_callback(self, request, response, uri="all"):
 
-        self.get_logger().info(f"{uri}: Received notify setpoint stop")
+        self.get_logger().info(f"[{self.cf_dict[uri]}] Received notify setpoint stop")
 
         if uri == "all":
             for link_uri in self.uris:
@@ -855,7 +864,8 @@ class CrazyflieServer(Node):
         offset = request.piece_offset
         lenght = len(request.pieces)
         total_duration = 0
-        self.get_logger().info("upload_trajectory(id=%d,offset=%d, lenght=%d)" % (
+        self.get_logger().info("[%s] upload_trajectory(id=%d,offset=%d, lenght=%d)" % (
+            self.cf_dict[uri],
             id,
             offset,
             lenght,
@@ -881,7 +891,7 @@ class CrazyflieServer(Node):
                 trajectory_mem.trajectory = trajectory
                 upload_result = trajectory_mem.write_data_sync()
                 if not upload_result:
-                    self.get_logger().info(f"{link_uri}: Upload failed")
+                    self.get_logger().info(f"[{self.cf_dict[uri]}] Upload failed")
                     upload_success_all = False
                 else:
                     self.swarm._cfs[link_uri].cf.high_level_commander.define_trajectory(
@@ -895,7 +905,7 @@ class CrazyflieServer(Node):
             trajectory_mem.trajectory = trajectory
             upload_result = trajectory_mem.write_data_sync()
             if not upload_result:
-                self.get_logger().info(f"{uri}: Upload failed")
+                self.get_logger().info(f"[{self.cf_dict[uri]}] Upload failed")
                 response.success = False
                 return response
             self.swarm._cfs[uri].cf.high_level_commander.define_trajectory(
@@ -911,7 +921,8 @@ class CrazyflieServer(Node):
         rev = request.reversed
         gm = request.group_mask
 
-        self.get_logger().info("start_trajectory(id=%d,timescale=%f,relative=%d, reversed=%d, group_mask=%d)" % (
+        self.get_logger().info("[%s] start_trajectory(id=%d,timescale=%f,relative=%d, reversed=%d, group_mask=%d)" % (
+            self.cf_dict[uri],
             id,
             ts,
             rel,
@@ -1002,10 +1013,10 @@ class CrazyflieServer(Node):
                 self.swarm._cfs[uri].logging[topic_name + "_log_config"].stop()
                 self.destroy_publisher(
                     self.swarm._cfs[uri].logging[topic_name + "_publisher"])
-                self.get_logger().info(f"{uri}: Remove {topic_name} logging")
+                self.get_logger().info(f"[{self.cf_dict[uri]}] Remove {topic_name} logging")
             except rclpy.exceptions.ParameterNotDeclaredException:
                 self.get_logger().info(
-                    f"{uri}: No logblock of {topic_name} has been found ")
+                    f"[{self.cf_dict[uri]}] No logblock of {topic_name} has been found ")
                 response.success = False
                 return response
         else:
@@ -1015,10 +1026,10 @@ class CrazyflieServer(Node):
                 for log_name in self.swarm._cfs[uri].logging["custom_log_groups"][topic_name]["vars"]:
                     self.destroy_publisher(
                         self.swarm._cfs[uri].logging["custom_log_publisher"][topic_name])
-                self.get_logger().info(f"{uri}: Remove {topic_name} logging")
+                self.get_logger().info(f"[{self.cf_dict[uri]}] Remove {topic_name} logging")
             except rclpy.exceptions.ParameterNotDeclaredException:
                 self.get_logger().info(
-                    f"{uri}: No logblock of {topic_name} has been found ")
+                    f"[{self.cf_dict[uri]}] No logblock of {topic_name} has been found ")
                 response.success = False
                 return response
 
@@ -1042,10 +1053,10 @@ class CrazyflieServer(Node):
                                              "_log_config"].period_in_ms = 1000 / frequency
                 self.swarm._cfs[uri].logging[topic_name +
                                              "_log_config"].start()
-                self.get_logger().info(f"{uri}: Add {topic_name} logging")
+                self.get_logger().info(f"[{self.cf_dict[uri]}] Add {topic_name} logging")
             except rclpy.exceptions.ParameterAlreadyDeclaredException:
                 self.get_logger().info(
-                    f"{uri}: The content the logging of {topic_name} has already started ")
+                    f"[{self.cf_dict[uri]}] The content the logging of {topic_name} has already started ")
                 response.success = False
                 return response
         else:
@@ -1073,11 +1084,11 @@ class CrazyflieServer(Node):
                 self.swarm._cfs[uri].logging["custom_log_groups"][topic_name]["vars"] = variables
                 self.swarm._cfs[uri].logging["custom_log_groups"][topic_name]["frequency"] = frequency
 
-                self.get_logger().info(f"{uri}: Add {topic_name} logging")
+                self.get_logger().info(f"[{self.cf_dict[uri]}] Add {topic_name} logging")
             except KeyError as e:
-                self.get_logger().info(
-                    f"{uri}: Failed to add {topic_name} logging")
-                self.get_logger().info(str(e) + "is not in TOC")
+                self.get_logger().error(
+                    f"[{self.cf_dict[uri]}] Failed to add {topic_name} logging")
+                self.get_logger().error(str(e) + "is not in TOC")
                 self.undeclare_parameter(
                     self.cf_dict[uri] + ".logs." + topic_name + ".frequency.")
                 self.undeclare_parameter(
@@ -1085,8 +1096,8 @@ class CrazyflieServer(Node):
                 response.success = False
                 return response
             except rclpy.exceptions.ParameterAlreadyDeclaredException:
-                self.get_logger().info(
-                    f"{uri}: The content or part of the logging of {topic_name} has already started ")
+                self.get_logger().error(
+                    f"[{self.cf_dict[uri]}] The content or part of the logging of {topic_name} has already started ")
                 response.success = False
                 return response
 
