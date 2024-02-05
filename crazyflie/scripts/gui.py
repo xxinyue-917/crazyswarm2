@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 
-import math
 import threading
 import time
 from pathlib import Path
 from functools import partial
 
 import rclpy
-from geometry_msgs.msg import Pose, Twist
+from geometry_msgs.msg import Twist
 from rcl_interfaces.msg import Log
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 
-from tf2_ros import TransformException
+# from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 
@@ -215,7 +214,9 @@ def ros_main() -> None:
         pass
 
 
-app.add_static_files("/urdf", "/home/whoenig/projects/crazyflie/crazyswarm2/src/crazyswarm2/crazyflie/urdf/")
+app.add_static_files("/urdf",
+                     str((Path(__file__).parent.parent.parent / "share" / "crazyflie" / "urdf").resolve()),
+                     follow_symlink=True)
 app.on_startup(lambda: threading.Thread(target=ros_main).start())
 ui_run.APP_IMPORT_STRING = f'{__name__}:app'  # ROS2 uses a non-standard module name, so we need to specify it here
 ui.run(uvicorn_reload_dirs=str(Path(__file__).parent.resolve()), favicon='🤖')
