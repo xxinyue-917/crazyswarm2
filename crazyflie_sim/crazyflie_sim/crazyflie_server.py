@@ -250,7 +250,11 @@ class CrazyflieServer(Node):
             float(request.duration.nanosec / 1e9)
 
         self.get_logger().info(
-            '[%s] go_to(position=%f,%f,%f m, yaw=%f rad, duration=%f s, relative=%d, group_mask=%d)'
+            """[%s] go_to(position=%f,%f,%f m,
+             yaw=%f rad,
+             duration=%f s,
+             relative=%d,
+             group_mask=%d)"""
             % (
                 name,
                 request.goal.x,
