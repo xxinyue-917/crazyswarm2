@@ -198,7 +198,7 @@ class NiceGuiNode(Node):
         self.robotmodels[name].status_ok = status_ok
 
         # store the time when we last received any status
-        self.robotmodels[name].status_watchdog[name] = time.time()
+        self.robotmodels[name].status_watchdog = time.time()
 
     def on_tab_change(self, arg):
         for name, robotmodel in self.robotmodels.items():
