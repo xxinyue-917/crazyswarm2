@@ -48,8 +48,6 @@ class NiceGuiNode(Node):
         self.battery_labels = dict()
         self.radio_labels = dict()
         self.robotmodels = dict()
-        # set of robot names that had a status recently
-        self.watchdog = dict()
 
         with Client.auto_index_client:
 
@@ -60,11 +58,13 @@ class NiceGuiNode(Node):
                         for name in self.cfnames:
                             robot = scene.stl('/urdf/cf2_assembly.stl').scale(1.0).material('#ff0000').with_name(name)
                             self.robotmodels[name] = robot
-                            self.watchdog[name] = time.time()
+                            # augment with some additional fields
+                            robot.status_ok = False
+                            robot.status_watchdog = time.time()
                     scene.camera.x = 0
                     scene.camera.y = -1
                     scene.camera.z = 2
-                    scene.camera.look_at_x = 0  
+                    scene.camera.look_at_x = 0
                     scene.camera.look_at_y = 0
                     scene.camera.look_at_z = 0
 
@@ -80,21 +80,16 @@ class NiceGuiNode(Node):
                             self.supervisor_labels[name] = ui.label("")
                             self.battery_labels[name] = ui.label("")
                             self.radio_labels[name] = ui.label("")
-                            ui.button("Reboot", on_click=partial(self.on_reboot, name=name))
 
             for name in self.cfnames:
                 self.create_subscription(Status, name + '/status', partial(self.on_status, name=name), 1)
 
             # Call on_timer function
-            self.timer = self.create_timer(0.1, self.on_timer)
-
-    def send_speed(self, x: float, y: float) -> None:
-        msg = Twist()
-        msg.linear.x = x
-        msg.angular.z = -y
-        self.linear.value = x
-        self.angular.value = y
-        self.cmd_vel_publisher.publish(msg)
+            update_rate = 30 # Hz
+            self.timer = self.create_timer(
+                1.0/update_rate, 
+                self.on_timer,
+                clock=rclpy.clock.Clock(clock_type=rclpy.clock.ClockType.SYSTEM_TIME))
 
     def on_rosout(self, msg: Log) -> None:
         # filter by crazyflie and add to the correct log
@@ -115,20 +110,38 @@ class NiceGuiNode(Node):
 
     def on_timer(self) -> None:
         for name, robotmodel in self.robotmodels.items():
-            t = self.tf_buffer.lookup_transform(
-                            "world",
-                            name,
-                            rclpy.time.Time())
-            pos = t.transform.translation
-            robotmodel.move(pos.x, pos.y, pos.z)
-            robotmodel.rotate(*rowan.to_euler([
-                t.transform.rotation.w,
-                t.transform.rotation.x,
-                t.transform.rotation.y,
-                t.transform.rotation.z], "xyz"))
+            ros_time = rclpy.time.Time() # get the latest
+            robot_status_ok = robotmodel.status_ok
+            if self.tf_buffer.can_transform("world", name, ros_time):
+                t = self.tf_buffer.lookup_transform(
+                                "world",
+                                name,
+                                ros_time)
+                transform_time = rclpy.time.Time.from_msg(t.header.stamp)
+                transform_age = self.get_clock().now() - transform_time
+                # latest transform is older than a second indicates a problem
+                if transform_age.nanoseconds * 1e-9 > 1:
+                    robot_status_ok = False
+                else:
+                    pos = t.transform.translation
+                    robotmodel.move(pos.x, pos.y, pos.z)
+                    robotmodel.rotate(*rowan.to_euler([
+                        t.transform.rotation.w,
+                        t.transform.rotation.x,
+                        t.transform.rotation.y,
+                        t.transform.rotation.z], "xyz"))
+            else:
+                # no available transform indicates a problem
+                robot_status_ok = False
 
-            # no update for a while -> mark red
-            if time.time() - self.watchdog[name] > 2.0:
+            # no status update for a while, indicate a problem
+            if time.time() - robotmodel.status_watchdog > 2.0:
+                robot_status_ok = False
+
+            # any issues detected -> mark red, otherwise green
+            if robot_status_ok:
+                robotmodel.material('#00ff00')
+            else:
                 robotmodel.material('#ff0000')
 
     def on_vis_click(self, e: events.SceneClickEventArguments):
@@ -181,13 +194,11 @@ class NiceGuiNode(Node):
         radio_text = f'{msg.rssi} dBm; Unicast: {msg.num_rx_unicast} / {msg.num_tx_unicast}; Broadcast: {msg.num_rx_broadcast} / {msg.num_tx_broadcast}'
         self.radio_labels[name].set_text(radio_text)
 
-        if status_ok:
-            self.robotmodels[name].material('#00ff00')
-        else:
-            self.robotmodels[name].material('#ff0000')
+        # save status here
+        self.robotmodels[name].status_ok = status_ok
 
-        self.watchdog[name] = time.time()
-
+        # store the time when we last received any status
+        self.robotmodels[name].status_watchdog[name] = time.time()
 
     def on_tab_change(self, arg):
         for name, robotmodel in self.robotmodels.items():
@@ -195,9 +206,6 @@ class NiceGuiNode(Node):
                 robotmodel.scale(1)
         if arg.value in self.robotmodels:
             self.robotmodels[arg.value].scale(2)
-
-    def on_reboot(self, name) -> None:
-        ui.notify(f'Reboot not implemented, yet')
 
 
 def main() -> None:

@@ -138,5 +138,9 @@ def generate_launch_description():
             package='crazyflie',
             executable='gui.py',
             name='gui',
+            output='screen',
+            parameters=[{
+                "use_sim_time": True,
+            }]
         ),
     ])
