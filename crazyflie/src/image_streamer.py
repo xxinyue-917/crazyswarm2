@@ -56,7 +56,7 @@ class ImageNode(rclpy.node.Node):
                 )
 
         # create messages and publishers
-        self.image_mgs = Image()
+        self.image_msg = Image()
         self.camera_info_msg = self._construct_from_yaml(config_path)
         self.image_publisher = self.create_publisher(Image, image_topic, 10)
         self.info_publisher = self.create_publisher(CameraInfo, info_topic, 10)
@@ -66,14 +66,16 @@ class ImageNode(rclpy.node.Node):
 
         # set up connection to AI Deck
         deck_ip = "192.168.4.1"
-        deck_port = '5000'
+        deck_port = 5000
+        print("Connecting to socket on {}:{}...".format(deck_ip, deck_port))
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((deck_ip, deck_port))
+        print("Socket connected")
         self.image = None
         self.rx_buffer = bytearray()
 
         # set up timers for callbacks
-        timer_period = 0.5
+        timer_period = 0.01
         self.rx_timer = self.create_timer(timer_period, self.receive_callback)
         self.tx_timer = self.create_timer(timer_period, self.publish_callback)
 
@@ -123,24 +125,23 @@ class ImageNode(rclpy.node.Node):
             raw_img = np.frombuffer(imgStream, dtype=np.uint8)
             raw_img.shape = (width, height)
             self.image = cv2.cvtColor(raw_img, cv2.COLOR_BayerBG2RGBA)
-
-        else: # otherwise set image to None again
-            self.image = None
+        # else: # otherwise set image to None again
+        #     self.image = None
 
     def publish_callback(self):
         if self.image is not None:
-            self.image_mgs.header.frame_id = self.camera_info_msg.header.frame_id
-            self.image_mgs.header.stamp = self.get_clock().now().to_msg()
-            self.camera_info_msg.header.stamp = self.image_mgs.header.stamp
+            self.image_msg.header.frame_id = self.camera_info_msg.header.frame_id
+            self.image_msg.header.stamp = self.get_clock().now().to_msg()
+            self.camera_info_msg.header.stamp = self.image_msg.header.stamp
+            width, height, channels = self.image.shape
+            self.image_msg.height = height
+            self.image_msg.width = width
+            self.image_msg.encoding = 'rgba8'
+            self.image_msg.step = width * channels   # number of bytes each row in the array will occupy
+            self.image_msg.is_bigendian = 0 # TODO: implement automatic check depending on system
+            self.image_msg.data = self.image.flatten().data
 
-            self.image_mgs.height = self.camera_info_msg.height
-            self.image_mgs.width = self.camera_info_msg.width
-            self.image_mgs.encoding = 'rgba8'
-            self.image_mgs.step = self.image.step
-            self.image_mgs.is_bigendian = 0 # TODO: implement automatic check depending on system
-            self.image_mgs.data = self.image.data
-
-            self.image_publisher.publish(self.image_mgs)
+            self.image_publisher.publish(self.image_msg)
             self.info_publisher.publish(self.camera_info_msg)
             self.image = None
             
