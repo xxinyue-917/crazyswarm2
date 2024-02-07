@@ -19,7 +19,7 @@ class ImageNode(rclpy.node.Node):
         # declare topic names
         self.declare_parameter(
             name="image_topic",
-            value="/camera/image",
+            value="/image",
             descriptor=ParameterDescriptor(
                 type=ParameterType.PARAMETER_STRING,
                 description="Image topic to publish to.",
@@ -60,9 +60,6 @@ class ImageNode(rclpy.node.Node):
         self.camera_info_msg = self._construct_from_yaml(config_path)
         self.image_publisher = self.create_publisher(Image, image_topic, 10)
         self.info_publisher = self.create_publisher(CameraInfo, info_topic, 10)
-
-        # TODO: just for testing, needs to be moved
-        self.info_publisher.publish(self.camera_info_msg)
 
         # set up connection to AI Deck
         deck_ip = "192.168.4.1"

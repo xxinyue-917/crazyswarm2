@@ -1,17 +1,17 @@
-image_width: 725
-image_height: 500
+image_width: 324
+image_height: 324
 camera_name: crazyflie
 camera_matrix:
   rows: 3
   cols: 3
-  data: [383.76372,   0.     , 363.38408,
-           0.     , 381.38288, 271.61177,
+  data: [181.87464,   0.     , 162.52301,
+           0.     , 182.58129, 160.79418,
            0.     ,   0.     ,   1.     ]
 distortion_model: plumb_bob
 distortion_coefficients:
   rows: 1
   cols: 5
-  data: [-0.001747, -0.009650, -0.002608, -0.002890, 0.000000]
+  data: [-0.070366, -0.006434, -0.002691, -0.001983, 0.000000]
 rectification_matrix:
   rows: 3
   cols: 3
@@ -21,38 +21,6 @@ rectification_matrix:
 projection_matrix:
   rows: 3
   cols: 4
-  data: [380.19111,   0.     , 360.28396,   0.     ,
-           0.     , 380.987  , 270.48483,   0.     ,
+  data: [169.24555,   0.     , 161.54541,   0.     ,
+           0.     , 169.97813, 159.07974,   0.     ,
            0.     ,   0.     ,   1.     ,   0.     ]
-
-
-
-# image_width: 533
-# image_height: 320
-# camera_name: hoverair
-# camera_matrix:
-#   rows: 3
-#   cols: 3
-#   data: [295.21347,   0.     , 284.02365,
-#            0.     , 294.30945, 196.91373,
-#            0.     ,   0.     ,   1.     ]
-# distortion_model: plumb_bob
-# distortion_coefficients:
-#   rows: 1
-#   cols: 5
-#   data: [0.029797, -0.026754, 0.000635, -0.001295, 0.000000]
-# rectification_matrix:
-#   rows: 3
-#   cols: 3
-#   data: [1., 0., 0.,
-#          0., 1., 0.,
-#          0., 0., 1.]
-# projection_matrix:
-#   rows: 3
-#   cols: 4
-#   data: [297.20145,   0.     , 283.47583,   0.     ,
-#            0.     , 296.96598, 197.18161,   0.     ,
-#            0.     ,   0.     ,   1.     ,   0.     ]
-
-
-
