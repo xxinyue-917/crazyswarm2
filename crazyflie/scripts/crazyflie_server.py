@@ -364,7 +364,8 @@ class CrazyflieServer(Node):
 
         self.swarm.fully_connected_crazyflie_cnt += 1
 
-        if self.swarm.fully_connected_crazyflie_cnt == len(self.cf_dict):
+        # use len(self.cf_dict) - 1, since cf_dict contains "all" as well
+        if self.swarm.fully_connected_crazyflie_cnt == len(self.cf_dict) - 1:
             self.get_logger().info("All Crazyflies are fully connected!")
             self._init_parameters()
             self._init_logging()
@@ -707,7 +708,22 @@ class CrazyflieServer(Node):
         for param in params:
             param_split = param.name.split(".")
 
-            if param_split[0] in self.cf_dict.values():
+            if param_split[0] == "all":
+                if param_split[1] == "params":
+                    name_param = param_split[2] + "." + param_split[3]
+                    try:
+                        for link_uri in self.uris:
+                            cf = self.swarm._cfs[link_uri].cf.param.set_value(
+                                name_param, param.value
+                            )
+                        self.get_logger().info(
+                            f"[{self.cf_dict[link_uri]}] {name_param} is set to {param.value}"
+                        )
+                        return SetParametersResult(successful=True)
+                    except Exception as e:
+                        self.get_logger().info(str(e))
+                        return SetParametersResult(successful=False)
+            elif param_split[0] in self.cf_dict.values():
                 cf_name = param_split[0]
                 if param_split[1] == "params":
                     name_param = param_split[2] + "." + param_split[3]
@@ -724,21 +740,7 @@ class CrazyflieServer(Node):
                         return SetParametersResult(successful=False)
                 if param_split[1] == "logs":
                     return SetParametersResult(successful=True)
-            elif param_split[0] == "all":
-                if param_split[1] == "params":
-                    name_param = param_split[2] + "." + param_split[3]
-                    try:
-                        for link_uri in self.uris:
-                            cf = self.swarm._cfs[link_uri].cf.param.set_value(
-                                name_param, param.value
-                            )
-                        self.get_logger().info(
-                            f"[{self.cf_dict[link_uri]}] {name_param} is set to {param.value}"
-                        )
-                        return SetParametersResult(successful=True)
-                    except Exception as e:
-                        self.get_logger().info(str(e))
-                        return SetParametersResult(successful=False)
+
 
         return SetParametersResult(successful=False)
 
