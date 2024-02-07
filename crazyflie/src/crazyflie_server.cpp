@@ -828,9 +828,11 @@ private:
     }
 
     auto stats = cf_.connectionStatsDelta();
-    float ack_rate = stats.sent_count / stats.ack_count;
-    if (ack_rate < min_ack_rate_) {
-      RCLCPP_WARN(logger_, "Ack rate: %.1f %%", ack_rate * 100);
+    if (stats.ack_count > 0) {
+      float ack_rate = stats.sent_count / stats.ack_count;
+      if (ack_rate < min_ack_rate_) {
+        RCLCPP_WARN(logger_, "Ack rate: %.1f %%", name_.c_str(), ack_rate * 100);
+      }
     }
 
     if (publish_stats_) {
