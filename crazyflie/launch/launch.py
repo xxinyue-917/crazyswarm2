@@ -134,13 +134,4 @@ def generate_launch_description():
                 "use_sim_time": True,
             }]
         ),
-        Node(
-            package='crazyflie',
-            executable='gui.py',
-            name='gui',
-            output='screen',
-            parameters=[{
-                "use_sim_time": True,
-            }]
-        ),
     ])
