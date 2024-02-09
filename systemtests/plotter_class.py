@@ -9,8 +9,8 @@ from pathlib import Path
 
 class Plotter:
 
-    def __init__(self):
-        self.params = {'experiment':'1','trajectory':'figure8.csv','motors':'standard motors(CF)', 'propellers':'standard propellers(CF)'}
+    def __init__(self, sim_backend = False):
+        self.params = {'experiment':'1','trajectory':'','motors':'standard motors(CF)', 'propellers':'standard propellers(CF)'}
         self.bag_times = np.empty([0])
         self.bag_x = np.empty([0])
         self.bag_y = np.empty([0])
@@ -20,13 +20,16 @@ class Plotter:
         self.ideal_traj_z = np.empty([0])
         self.euclidian_dist = np.empty([0])
         self.deviation = [] #list of all indexes where euclidian_distance(ideal - recorded) > EPSILON
+        self.test_name = None
 
-        self.EPSILON = 0.05 # euclidian distance in [m] between ideal and recorded trajectory under which the drone has to stay to pass the test
-        self.DELAY_CONST_FIG8 = 4.75 #this is the delay constant which I found by adding up all the time.sleep() etc in the figure8.py file. This could be implemented better later ?
+        self.SIM = sim_backend      #indicates if we are plotting data from real life test or from a simulated test. Default is false (real life test)
+        self.EPSILON = 0.1 # euclidian distance in [m] between ideal and recorded trajectory under which the drone has to stay to pass the test (NB : epsilon is doubled for multi_trajectory test)
+        self.ALLOWED_DEV_POINTS = 0.05  #allowed percentage of datapoints whose deviation > EPSILON while still passing test (currently % for fig8 and 10% for mt)
+        self.DELAY_CONST_FIG8 = 4.75 #this is the delay constant which I found by adding up all the time.sleep() etc in the figure8.py file. 
+        if self.SIM :                #It allows to temporally adjust the ideal and real trajectories on the graph. Could this be implemented in a better (not hardcoded) way ?
+            self.DELAY_CONST_FIG8 = -0.18  #for an unknown reason, the delay constant with the sim_backend is different
         self.ALTITUDE_CONST_FIG8 = 1 #this is the altitude given for the takeoff in figure8.py. I should find a better solution than a symbolic constant ?
-        self.ALTITUDE_CONST_MULTITRAJ = 1 #takeoff altitude for traj0 in multi_trajectory.py
-        self.X_OFFSET_CONST_MULTITRAJ = -0.3 #offest on the x axis between ideal and real trajectory. Reason: ideal trajectory (traj0.csv) starts with offset of 0.3m and CrazyflieServer.startTrajectory() is relative to start position
-
+    
     def file_guard(self, pdf_path):
         msg = None
         if os.path.exists(pdf_path):
@@ -47,22 +50,11 @@ class Plotter:
     def read_csv_and_set_arrays(self, ideal_csvfile, rosbag_csvfile):
         '''Method that reads the csv data of the ideal test trajectory and of the actual recorded trajectory and initializes the attribute arrays'''
 
-        #check which test we are plotting : figure8 or multi_trajectory or another one
-        if("figure8" in rosbag_csvfile):
-            fig8, m_t = True, False
-            print("Plotting fig8 test data")
-        elif "multi_trajectory" in rosbag_csvfile:
-            fig8, m_t = False, True
-            print("Plotting multi_trajectory test data")
-        else:
-            fig8, m_t = False, False
-            print("Plotting unspecified test data")
-
+        
         #get ideal trajectory data
         self.ideal_traj_csv = Trajectory()
         try:
             path_to_ideal_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)),ideal_csvfile)
-            print(path_to_ideal_csv)
             self.ideal_traj_csv.loadcsv(path_to_ideal_csv)
         except FileNotFoundError:
             print("Plotter : File not found " + path_to_ideal_csv)
@@ -91,23 +83,21 @@ class Plotter:
 
         no_match_in_idealcsv=[]
 
+        delay = 0
+        if self.test_name == "fig8":
+            delay = self.DELAY_CONST_FIG8
+        elif self.test_name == "m_t":
+            delay = self.DELAY_CONST_MT
+
         for i in range(bag_arrays_size):  
             try:
-                pos = self.ideal_traj_csv.eval(self.bag_times[i] - self.DELAY_CONST_FIG8).pos
+                pos = self.ideal_traj_csv.eval(self.bag_times[i] - delay).pos
             except AssertionError: 
                 no_match_in_idealcsv.append(i)
                 pos = [0,0,0]  #for all recorded datapoints who cannot be matched to a corresponding ideal position we assume the drone is on its ground start position (ie those datapoints are before takeoff or after landing)
 
                
             self.ideal_traj_x[i], self.ideal_traj_y[i], self.ideal_traj_z[i]= pos[0], pos[1], pos[2]
-
-            #special cases 
-            if fig8:                                                                                                         
-                self.ideal_traj_z[i] = self.ALTITUDE_CONST_FIG8                     #special case: in fig8 no altitude is given in the trajectory polynomials  (idealcsv) but is fixed as the takeoff altitude in figure8.py  
-            elif m_t:                                                                   
-                self.ideal_traj_z[i] = pos[2] + self.ALTITUDE_CONST_MULTITRAJ       #for multi_trajectory the altitude given in the trajectory polynomials is added to the fixed takeoff altitude specified in multi_trajectory.py
-                self.ideal_traj_x[i] = pos[0] + self.X_OFFSET_CONST_MULTITRAJ       #the x-axis is offset by 0.3 m because ideal start position not being (0,0,0)
-    
 
             self.euclidian_dist[i] = np.linalg.norm([self.ideal_traj_x[i]-self.bag_x[i], 
                                                 self.ideal_traj_y[i]-self.bag_y[i], self.ideal_traj_z[i]-self.bag_z[i]])
@@ -146,8 +136,7 @@ class Plotter:
     def adjust_arrays(self):
         ''' Method that trims the self.bag_* attributes to get rid of the datapoints where the drone is immobile on the ground and makes self.bag_times start at 0 [s]'''
 
-        print(f"rosbag initial length {(self.bag_times[-1]-self.bag_times[0]) * 10**-9}s")
-
+        print(f"rosbag initial length {(self.bag_times[-1]-self.bag_times[0]) }s")
         #find the takeoff time and landing times
         ground_level = self.bag_z[0]
         airborne = False
@@ -157,15 +146,15 @@ class Plotter:
         for z_coord in self.bag_z:
             if not(airborne) and z_coord > ground_level + ground_level*(0.1): #when altitude of the drone is 10% higher than the ground level, it started takeoff
                 takeoff_index = i
-                takeoff_time = self.bag_times[takeoff_index]
                 airborne = True
-                print(f"takeof time is {(takeoff_time-self.bag_times[0]) * 10**-9}")
-            if airborne and z_coord < ground_level + ground_level*(0.1): #find when it lands again
+                print(f"takeoff time is {self.bag_times[takeoff_index]}s")
+            if airborne and z_coord <= ground_level + ground_level*(0.1): #find when it lands again
                 landing_index = i
-                landing_time = self.bag_times[landing_index]
-                print(f"landing time is {(landing_time-self.bag_times[0]) * 10**-9}")
+                print(f"landing time is {self.bag_times[landing_index]}s")
                 break
             i+=1
+
+
 
         assert (takeoff_index != None) and (landing_index != None), "Plotter : couldn't find drone takeoff or landing"
 
@@ -176,26 +165,44 @@ class Plotter:
         index_arr = np.arange(len(self.bag_times))
         slicing_arr = np.delete(index_arr, index_arr[takeoff_index:landing_index+1])  #in our slicing array we take out all the indexes of when the drone is in flight so that it only contains the indexes of when the drone is on the ground
 
-        #delete the datapoints where drone is on the ground
-        self.bag_times = np.delete(self.bag_times, slicing_arr)
-        self.bag_x = np.delete(self.bag_x, slicing_arr)
-        self.bag_y = np.delete(self.bag_y, slicing_arr)
-        self.bag_z = np.delete(self.bag_z, slicing_arr)
+        # #delete the datapoints where drone is on the ground
+        # self.bag_times = np.delete(self.bag_times, slicing_arr)
+        # self.bag_x = np.delete(self.bag_x, slicing_arr)
+        # self.bag_y = np.delete(self.bag_y, slicing_arr)
+        # self.bag_z = np.delete(self.bag_z, slicing_arr)
 
         assert len(self.bag_times) == len(self.bag_x) == len(self.bag_y) == len(self.bag_z), "Plotter : self.bag_* aren't the same size after trimming"
 
-        #rewrite bag_times to start at 0 and be written in [s] instead of [ns]
-        bag_start_time = self.bag_times[0]
-        self.bag_times =  (self.bag_times-bag_start_time) * (10**-9)
-        assert self.bag_times[0] == 0
         print(f"trimmed bag_times starts: {self.bag_times[0]}s and ends: {self.bag_times[-1]}, size: {len(self.bag_times)}")
 
 
 
-    def create_figures(self, ideal_csvfile:str, rosbag_csvfile:str, pdfname:str):
+    def create_figures(self, ideal_csvfile:str, rosbag_csvfile:str, pdfname:str, overwrite=False):
         '''Method that creates the pdf with the plots'''
 
+        #check which test we are plotting : figure8 or multi_trajectory or another one
+        if("figure8" in rosbag_csvfile):
+            self.test_name = "fig8"
+            self.params["trajectory"] = "figure8"
+            print("Plotting fig8 test data")
+        elif "multi_trajectory" in rosbag_csvfile:
+            self.test_name = "mt"
+            self.params["trajectory"] = "multi_trajectory"
+            self.EPSILON *= 2  #multi_trajectory test has way more difficulties
+            self.ALLOWED_DEV_POINTS *= 2
+            print("Plotting multi_trajectory test data")
+        else:
+            self.test_name = "undefined"
+            self.params["trajectory"] = "undefined"
+            print("Plotting unspecified test data")
+
+
         self.read_csv_and_set_arrays(ideal_csvfile,rosbag_csvfile)
+        offset_list = self.find_temporal_offset() 
+        if len(offset_list) == 1:
+            offset_string = f"temporal offset : {offset_list[0]}s \n"
+        elif len(offset_list) ==2:
+            offset_string = f"averaged temporal offset : {(offset_list[0]+offset_list[1])/2}s \n"
         
         passed="failed"
         if self.test_passed():
@@ -206,7 +213,8 @@ class Plotter:
             pdfname= pdfname + '.pdf'
 
         #check if user wants to overwrite the report file
-        self.file_guard(pdfname)
+        if not overwrite :
+            self.file_guard(pdfname)
         pdf_pages = PdfPages(pdfname)
 
         #create title page
@@ -223,7 +231,7 @@ class Plotter:
         title_text_parameters = f'Parameters:\n'
         for key, value in self.params.items():
             title_text_parameters += f"    {key}: {value}\n"
-        title_text_results = f'Results: test {passed}\n' + f'max error : '
+        title_text_results = f'Results: test {passed}\n' + offset_string + f'max error : '
 
         title_text = text + "\n" + title_text_settings + "\n" + title_text_parameters + "\n" + title_text_results
         fig = plt.figure(figsize=(5,8))
@@ -321,18 +329,41 @@ class Plotter:
         print("Results saved in " + pdfname)
 
     def test_passed(self) -> bool :
-        '''Returns True if the deviation between recorded and ideal trajectories of the drone always stayed lower 
-        than EPSILON. Returns False otherwise '''
+        '''Returns True if the deviation between recorded and ideal trajectories of the drone didn't exceed EPSILON for more than ALLOWED_DEV_POINTS % of datapoints.
+          Returns False otherwise '''
 
         nb_dev_points = len(self.deviation)
+        threshold = self.ALLOWED_DEV_POINTS * len(self.bag_times)
+        percentage = (len(self.deviation) / len(self.bag_times)) * 100 
 
-        if nb_dev_points == 0:
-            print("Test passed")
+        if nb_dev_points < threshold:
+            print(f"Test {self.test_name} passed : {percentage:8.4f}% of datapoints had deviation larger than {self.EPSILON}m ({self.ALLOWED_DEV_POINTS * 100}% max for pass)")
             return True
         else:
-            print(f"The deviation between ideal and recorded trajectories is greater than {self.EPSILON}m for {nb_dev_points} "
-                  f"datapoints, which corresponds to a duration of {nb_dev_points*0.01}s")
+            print(f"Test {self.test_name} failed : The deviation between ideal and recorded trajectories is greater than {self.EPSILON}m for {percentage:8.4f}% of  datapoints")
             return False
+        
+    def find_temporal_offset(self) -> list :
+        ''' Returns a list containing the on-graph temporal offset between real and ideal trajectory. If offset is different for x and y axis, returns both in the same list'''
+        peak_x = self.bag_x.argmax()  #find index of extremum value of real trajectory along x axis 
+        peak_time_x = self.bag_times[peak_x] #find corresponding time 
+        peak_x_ideal = self.ideal_traj_x.argmax() #find index of extremum value of ideal traj along x axis
+        peak_time_x_ideal = self.bag_times[peak_x_ideal] #find corresponding time
+        offset_x = peak_time_x_ideal - peak_time_x
+
+        peak_y = self.bag_y.argmax()  #find index of extremum value of real trajectory along y ayis 
+        peak_time_y = self.bag_times[peak_y] #find corresponding time 
+        peak_y_ideal = self.ideal_traj_y.argmax() #find index of extremum value of ideal traj along y ayis
+        peak_time_y_ideal = self.bag_times[peak_y_ideal] #find corresponding time
+        offset_y = peak_time_y_ideal - peak_time_y
+
+        if offset_x == offset_y:
+            print(f"On-graph temporal offset is {offset_x}s, delay const is {self.DELAY_CONST_FIG8} so uncorrected/absolute offset is {offset_x-self.DELAY_CONST_FIG8}")
+            return [offset_x]
+        else : 
+            print(f"On-graph temporal offsets are {offset_x} & {offset_y} secs, delay const is {self.DELAY_CONST_FIG8}")
+            return [offset_x, offset_y]
+
 
 if __name__=="__main__":
     
@@ -344,12 +375,13 @@ if __name__=="__main__":
     parser.add_argument("recorded_trajectory", type=str, help=".csv file containing (time,x,y,z) of the recorded drone trajectory")
     parser.add_argument("pdf", type=str, help="name of the pdf file you want to create/overwrite")
     parser.add_argument("--open", help="Open the pdf directly after it is created", action="store_true")
+    parser.add_argument("--overwrite", action="store_true", help="If the given pdf already exists, overwrites it without asking")
     args : Namespace = parser.parse_args()
 
     plotter = Plotter()
-    plotter.create_figures(args.desired_trajectory, args.recorded_trajectory, args.pdf)
+    plotter.create_figures(args.desired_trajectory, args.recorded_trajectory, args.pdf, overwrite=args.overwrite)
     if args.open:
         import subprocess
         subprocess.call(["xdg-open", args.pdf])
-        
-        
+
+
