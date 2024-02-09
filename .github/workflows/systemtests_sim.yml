@@ -2,7 +2,9 @@ name: System Tests Simulation
 
 on:
   push:
-    branches: [ "main", "feature-systemtests-sim-fixed-timestamp" ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   # manual trigger
   workflow_dispatch:
 
