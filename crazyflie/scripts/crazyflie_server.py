@@ -218,14 +218,6 @@ class CrazyflieServer(Node):
                                    " or if your script have proper access to a Crazyradio PA")
             exit()
 
-        # Create services for the entire swarm and each individual crazyflie
-        self.create_service(Empty, "all/emergency", self._emergency_callback)
-        self.create_service(Takeoff, "all/takeoff", self._takeoff_callback)
-        self.create_service(Land, "all/land", self._land_callback)
-        self.create_service(GoTo, "all/go_to", self._go_to_callback)
-        self.create_service(
-            StartTrajectory, "all/start_trajectory", self._start_trajectory_callback)
-
         for uri in self.cf_dict:
             if uri == "all":
                 continue
@@ -293,6 +285,16 @@ class CrazyflieServer(Node):
                 NamedPoseArray, "/poses",
                 self._poses_changed, qos_profile
             )
+
+        # Create services for the entire swarm and each individual crazyflie
+        self.create_service(Takeoff, "all/takeoff", self._takeoff_callback)
+        self.create_service(Land, "all/land", self._land_callback)
+        self.create_service(GoTo, "all/go_to", self._go_to_callback)
+        self.create_service(
+            StartTrajectory, "all/start_trajectory", self._start_trajectory_callback)
+        
+        # This is the last service to announce and can be used to check if the server is fully available
+        self.create_service(Empty, "all/emergency", self._emergency_callback)
 
     def _init_default_logblocks(self, prefix, link_uri, list_logvar, global_logging_enabled, topic_type):
         """

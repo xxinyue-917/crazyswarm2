@@ -91,15 +91,6 @@ class CrazyflieServer(Node):
                 controller_name,
                 self.backend.time)
 
-        # Create services for the entire swarm and each individual crazyflie
-        self.create_service(Empty, 'all/emergency', self._emergency_callback)
-        self.create_service(Takeoff, 'all/takeoff', self._takeoff_callback)
-        self.create_service(Land, 'all/land', self._land_callback)
-        self.create_service(GoTo, 'all/go_to', self._go_to_callback)
-        self.create_service(StartTrajectory,
-                            'all/start_trajectory',
-                            self._start_trajectory_callback)
-
         for name, _ in self.cfs.items():
             pub = self.create_publisher(
                     String,
@@ -165,6 +156,17 @@ class CrazyflieServer(Node):
                 partial(self._cmd_full_state_changed, name=name),
                 10
             )
+
+        # Create services for the entire swarm and each individual crazyflie
+        self.create_service(Takeoff, 'all/takeoff', self._takeoff_callback)
+        self.create_service(Land, 'all/land', self._land_callback)
+        self.create_service(GoTo, 'all/go_to', self._go_to_callback)
+        self.create_service(StartTrajectory,
+                            'all/start_trajectory',
+                            self._start_trajectory_callback)
+
+        # This is the last service to announce and can be used to check if the server is fully available
+        self.create_service(Empty, 'all/emergency', self._emergency_callback)
 
         # step as fast as possible
         max_dt = 0.0 if 'max_dt' not in self._ros_parameters['sim'] \
