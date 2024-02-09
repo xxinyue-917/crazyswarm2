@@ -1,3 +1,7 @@
+image_topic: /camera/image
+camera_info_topic: /camera/camera_info
+deck_ip: "192.168.4.1"
+deck_port: 5000
 image_width: 324
 image_height: 324
 camera_name: crazyflie

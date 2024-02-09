@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import socket,os,struct, time
 import numpy as np
 import cv2
@@ -12,14 +13,28 @@ from sensor_msgs.msg import Image, CameraInfo
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 
-class ImageNode(rclpy.node.Node):
+class ImageStreamerNode(Node):
     def __init__(self):
         super().__init__("image_node")
+
+        # declare config path parameter
+        self.declare_parameter(
+            name="config_path",
+            value=os.path.join(
+                    get_package_share_directory('crazyflie'),
+                    'config',
+                    'aideck_streamer.yaml'
+                )
+        )
+
+        config_path = self.get_parameter("config_path").value
+        with open(config_path) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
 
         # declare topic names
         self.declare_parameter(
             name="image_topic",
-            value="/image",
+            value=config["image_topic"],
             descriptor=ParameterDescriptor(
                 type=ParameterType.PARAMETER_STRING,
                 description="Image topic to publish to.",
@@ -28,46 +43,49 @@ class ImageNode(rclpy.node.Node):
 
         self.declare_parameter(
             name="camera_info_topic",
-            value="/camera/camera_info",
+            value=config["camera_info_topic"],
             descriptor=ParameterDescriptor(
                 type=ParameterType.PARAMETER_STRING,
                 description="Camera info topic to subscribe to.",
             ),
         )
 
-        # update topic names from config
+        # declare aideck ip and port
+        self.declare_parameter(
+            name='deck_ip',
+            value=config['deck_ip'],        
+            )
+        
+        self.declare_parameter(
+            name='deck_port',
+            value=config['deck_port'],        
+        )
+
+        # define variables from ros2 parameters
         image_topic = (
-            self.get_parameter("image_topic").get_parameter_value().string_value
+            self.get_parameter("image_topic").value
         )
         self.get_logger().info(f"Image topic: {image_topic}")
 
         info_topic = (
-            self.get_parameter("camera_info_topic").get_parameter_value().string_value
+            self.get_parameter("camera_info_topic").value
         )
         self.get_logger().info(f"Image info topic: {info_topic}")
 
-        
-        # load camera parameters from yaml
-        # TODO: could possibly be done in the same way as with the other parameters
-        config_path = os.path.join(
-                    get_package_share_directory('crazyflie'),
-                    'config',
-                    'camera_config.yaml'
-                )
 
         # create messages and publishers
         self.image_msg = Image()
-        self.camera_info_msg = self._construct_from_yaml(config_path)
+        self.camera_info_msg = self._construct_from_yaml(config)
         self.image_publisher = self.create_publisher(Image, image_topic, 10)
         self.info_publisher = self.create_publisher(CameraInfo, info_topic, 10)
 
         # set up connection to AI Deck
-        deck_ip = "192.168.4.1"
-        deck_port = 5000
-        print("Connecting to socket on {}:{}...".format(deck_ip, deck_port))
+        deck_ip = self.get_parameter("deck_ip").value
+        deck_port = int(self.get_parameter("deck_port").value)
+        self.get_logger().info("Connecting to socket on {}:{}...".format(deck_ip, deck_port))
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((deck_ip, deck_port))
-        print("Socket connected")
+        self.get_logger().info("Socket connected")
         self.image = None
         self.rx_buffer = bytearray()
 
@@ -77,10 +95,8 @@ class ImageNode(rclpy.node.Node):
         self.tx_timer = self.create_timer(timer_period, self.publish_callback)
 
 
-    def _construct_from_yaml(self, path):
+    def _construct_from_yaml(self, config):
         camera_info = CameraInfo()
-        with open(path) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
 
         camera_info.header.frame_id = config['camera_name']
         camera_info.header.stamp = self.get_clock().now().to_msg()
@@ -122,8 +138,6 @@ class ImageNode(rclpy.node.Node):
             raw_img = np.frombuffer(imgStream, dtype=np.uint8)
             raw_img.shape = (width, height)
             self.image = cv2.cvtColor(raw_img, cv2.COLOR_BayerBG2RGBA)
-        # else: # otherwise set image to None again
-        #     self.image = None
 
     def publish_callback(self):
         if self.image is not None:
@@ -146,7 +160,7 @@ class ImageNode(rclpy.node.Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = ImageNode()
+    node = ImageStreamerNode()
     rclpy.spin(node)
 
     node.destroy_node()
