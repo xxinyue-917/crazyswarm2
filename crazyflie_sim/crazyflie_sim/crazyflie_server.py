@@ -165,7 +165,8 @@ class CrazyflieServer(Node):
                             'all/start_trajectory',
                             self._start_trajectory_callback)
 
-        # This is the last service to announce and can be used to check if the server is fully available
+        # This is the last service to announce.
+        # Can be used to check if the server is fully available.
         self.create_service(Empty, 'all/emergency', self._emergency_callback)
 
         # step as fast as possible
