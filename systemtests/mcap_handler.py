@@ -41,7 +41,9 @@ class McapHandler:
             f = open(outputfile, 'w+')
             writer = csv.writer(f)
             for topic, msg, timestamp in self.read_messages(inputbag):
-                writer.writerow([timestamp, msg.transforms[0].transform.translation.x, msg.transforms[0].transform.translation.y, msg.transforms[0].transform.translation.z])
+                if topic =="/tf":
+                    t = msg.transforms[0].header.stamp.sec + msg.transforms[0].header.stamp.nanosec *10**(-9) 
+                    writer.writerow([t, msg.transforms[0].transform.translation.x, msg.transforms[0].transform.translation.y, msg.transforms[0].transform.translation.z])
             f.close()
         except FileNotFoundError:
             print(f"McapHandler : file {outputfile} not found")
@@ -62,3 +64,4 @@ if __name__ == "__main__":
 
     translator =  McapHandler()
     translator.write_mcap_to_csv(args.inputbag,args.outputfile)
+
