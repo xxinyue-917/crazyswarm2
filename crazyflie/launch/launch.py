@@ -71,6 +71,8 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('backend', default_value='cpp'),
         DeclareLaunchArgument('debug', default_value='False'),
+        DeclareLaunchArgument('rviz', default_value='False'),
+        DeclareLaunchArgument('gui', default_value='True'),
         Node(
             package='motion_capture_tracking',
             executable='motion_capture_tracking_node',
@@ -125,6 +127,7 @@ def generate_launch_description():
             parameters=server_params
         ),
         Node(
+            condition=LaunchConfigurationEquals('rviz', 'True'),
             package='rviz2',
             namespace='',
             executable='rviz2',
@@ -133,5 +136,12 @@ def generate_launch_description():
             parameters=[{
                 "use_sim_time": True,
             }]
+        ),
+        Node(
+            condition=LaunchConfigurationEquals('gui', 'True'),
+            package='crazyflie',
+            namespace='',
+            executable='gui.py',
+            name='gui',
         ),
     ])

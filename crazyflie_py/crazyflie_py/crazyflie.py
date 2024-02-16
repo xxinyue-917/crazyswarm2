@@ -717,6 +717,8 @@ class CrazyflieServer(rclpy.node.Node):
     def __init__(self):
         """Initialize the server. Waits for all ROS services before returning."""
         super().__init__('CrazyflieAPI')
+
+        # wait for server to be fully started
         self.emergencyService = self.create_client(Empty, 'all/emergency')
         self.emergencyService.wait_for_service()
 

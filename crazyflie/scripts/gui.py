@@ -6,6 +6,7 @@ from pathlib import Path
 from functools import partial
 
 import rclpy
+from std_srvs.srv import Empty
 from geometry_msgs.msg import Twist
 from rcl_interfaces.msg import Log
 from rclpy.executors import ExternalShutdownException
@@ -18,13 +19,17 @@ from tf2_ros.transform_listener import TransformListener
 from crazyflie_interfaces.msg import Status
 import rowan
 
-from nicegui import Client, app, events, ui, ui_run
+from nicegui import Client, app, events, ui, ui_run, Tailwind
 
 
 class NiceGuiNode(Node):
 
     def __init__(self) -> None:
         super().__init__('nicegui')
+
+        # wait until the crazyflie_server is up and running
+        self.emergencyService = self.create_client(Empty, 'all/emergency')
+        self.emergencyService.wait_for_service()
 
         # find all crazyflies
         self.cfnames = []
@@ -49,6 +54,9 @@ class NiceGuiNode(Node):
         self.radio_labels = dict()
         self.robotmodels = dict()
 
+        self.normal_style = Tailwind().text_color('black').font_weight('normal')
+        self.red_style = Tailwind().text_color('red-600').font_weight('bold')
+
         with Client.auto_index_client:
 
             with ui.row().classes('items-stretch'):
@@ -60,7 +68,11 @@ class NiceGuiNode(Node):
                             self.robotmodels[name] = robot
                             # augment with some additional fields
                             robot.status_ok = False
+                            robot.battery_ok = False
                             robot.status_watchdog = time.time()
+                            robot.supervisor_text = ""
+                            robot.battery_text = ""
+                            robot.radio_text = ""
                     scene.camera.x = 0
                     scene.camera.y = -1
                     scene.camera.z = 2
@@ -111,7 +123,8 @@ class NiceGuiNode(Node):
     def on_timer(self) -> None:
         for name, robotmodel in self.robotmodels.items():
             ros_time = rclpy.time.Time() # get the latest
-            robot_status_ok = robotmodel.status_ok
+            robot_status_ok = robotmodel.status_ok and robotmodel.battery_ok
+            robot_status_text = ""
             if self.tf_buffer.can_transform("world", name, ros_time):
                 t = self.tf_buffer.lookup_transform(
                                 "world",
@@ -122,6 +135,7 @@ class NiceGuiNode(Node):
                 # latest transform is older than a second indicates a problem
                 if transform_age.nanoseconds * 1e-9 > 1:
                     robot_status_ok = False
+                    robot_status_text += "old transform; "
                 else:
                     pos = t.transform.translation
                     robotmodel.move(pos.x, pos.y, pos.z)
@@ -133,16 +147,31 @@ class NiceGuiNode(Node):
             else:
                 # no available transform indicates a problem
                 robot_status_ok = False
+                robot_status_text += "unavailable transform; "
 
             # no status update for a while, indicate a problem
             if time.time() - robotmodel.status_watchdog > 2.0:
                 robot_status_ok = False
+                robot_status_text += "no recent status update; "
+
+                self.supervisor_labels[name].set_text(robot_status_text)
+                self.battery_labels[name].set_text("N.A.")
+                self.radio_labels[name].set_text("N.A.")
+            else:
+                self.supervisor_labels[name].set_text(robot_status_text + robotmodel.supervisor_text)
+                self.battery_labels[name].set_text(robotmodel.battery_text)
+                self.radio_labels[name].set_text(robotmodel.radio_text)
 
             # any issues detected -> mark red, otherwise green
             if robot_status_ok:
                 robotmodel.material('#00ff00')
             else:
                 robotmodel.material('#ff0000')
+
+            if robotmodel.battery_ok:
+                self.normal_style.apply(self.battery_labels[name])
+            else:
+                self.red_style.apply(self.battery_labels[name])
 
     def on_vis_click(self, e: events.SceneClickEventArguments):
         hit = e.hits[0]
@@ -155,6 +184,7 @@ class NiceGuiNode(Node):
 
     def on_status(self, msg, name) -> None:
         status_ok = True
+        is_flying = False
         supervisor_text = ""
         if msg.supervisor_info & Status.SUPERVISOR_INFO_CAN_BE_ARMED:
             supervisor_text += "can be armed; "
@@ -166,17 +196,21 @@ class NiceGuiNode(Node):
             supervisor_text += "can fly; "
         if msg.supervisor_info & Status.SUPERVISOR_INFO_IS_FLYING:
             supervisor_text += "is flying; "
+            is_flying = True
         if msg.supervisor_info & Status.SUPERVISOR_INFO_IS_TUMBLED:
-            supervisor_text += "is tumpled; "
+            supervisor_text += "is tumbled; "
             status_ok = False
         if msg.supervisor_info & Status.SUPERVISOR_INFO_IS_LOCKED:
             supervisor_text += "is locked; "
             status_ok = False
-        self.supervisor_labels[name].set_text(supervisor_text)
+        self.robotmodels[name].supervisor_text = supervisor_text
 
         battery_text = f'{msg.battery_voltage:.2f} V'
-        if msg.battery_voltage < 3.8:
-            status_ok = False
+        battery_ok = True
+        # TODO (WH): We could read the voltage limits from the firmware (parameter) or crazyflies.yaml
+        #            In the firmware, anything below 3.2 is warning, anything below 3.0 is critical
+        if (is_flying and msg.battery_voltage < 3.2) or (not is_flying and msg.battery_voltage < 3.8):
+            battery_ok = False
         if msg.pm_state == Status.PM_STATE_BATTERY:
             battery_text += " (on battery)"
         elif msg.pm_state == Status.PM_STATE_CHARGING:
@@ -185,17 +219,18 @@ class NiceGuiNode(Node):
             battery_text += " (charged)"
         elif msg.pm_state == Status.PM_STATE_LOW_POWER:
             battery_text += " (low power)"
-            status_ok = False
+            battery_ok = False
         elif msg.pm_state == Status.PM_STATE_SHUTDOWN:
             battery_text += " (shutdown)"
-            status_ok = False
-        self.battery_labels[name].set_text(battery_text)
-
+            battery_ok = False
+        self.robotmodels[name].battery_text = battery_text
+        
         radio_text = f'{msg.rssi} dBm; Unicast: {msg.num_rx_unicast} / {msg.num_tx_unicast}; Broadcast: {msg.num_rx_broadcast} / {msg.num_tx_broadcast}'
-        self.radio_labels[name].set_text(radio_text)
+        self.robotmodels[name].radio_text = radio_text
 
         # save status here
         self.robotmodels[name].status_ok = status_ok
+        self.robotmodels[name].battery_ok = battery_ok
 
         # store the time when we last received any status
         self.robotmodels[name].status_watchdog = time.time()
