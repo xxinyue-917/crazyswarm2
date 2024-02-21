@@ -48,7 +48,7 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           cd ros2_ws
-          colcon build --symlink-install
+          colcon build --symlink-install -DCMAKE_BUILD_TYPE=Release
 
       - name: Flight test
         id: step6
