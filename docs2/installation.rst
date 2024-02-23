@@ -51,7 +51,7 @@ First Installation
     .. code-block:: bash
 
         cd ../
-        colcon build --symlink-install
+        colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
     .. note::
        symlink-install allows you to edit Python and config files without running `colcon build` every time.
@@ -99,7 +99,7 @@ You can update your local copy using the following commands:
     git submodule sync
     git submodule update --init --recursive
     cd ../../
-    colcon build --symlink-install
+    colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 
 .. Once you have completed installation,
