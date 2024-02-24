@@ -134,7 +134,7 @@ def generate_launch_description():
             name='rviz2',
             arguments=['-d' + os.path.join(get_package_share_directory('crazyflie'), 'config', 'config.rviz')],
             parameters=[{
-                "use_sim_time": True,
+                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
             }]
         ),
         Node(
@@ -143,5 +143,8 @@ def generate_launch_description():
             namespace='',
             executable='gui.py',
             name='gui',
+            parameters=[{
+                "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
+            }]
         ),
     ])
