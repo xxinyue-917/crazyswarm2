@@ -129,6 +129,12 @@ Example:
 
 .. code-block:: bash
 
+    [terminal]$ ros2 launch crazyflie_examples launch.py script:=hello_world backend:=sim
+
+which is a short-hand for the following two commands:
+
+.. code-block:: bash
+
     [terminal1]$ ros2 launch crazyflie launch.py backend:=sim
     [terminal2]$ ros2 run crazyflie_examples hello_world --ros-args -p use_sim_time:=True
 
@@ -155,6 +161,12 @@ You may run the script multiple times or different scripts while leaving the ser
 
     [terminal1]$ ros2 launch crazyflie launch.py
     [terminal2]$ ros2 run crazyflie_examples hello_world
+
+If you only want to run a single script once, you can also use:
+
+.. code-block:: bash
+
+    [terminal]$ ros2 launch crazyflie_examples launch.py script:=hello_world
 
 Swarm Management
 ----------------
