@@ -816,6 +816,8 @@ private:
       msg.num_tx_broadcast = deltaTxBc;
       previous_stats_broadcast_ = statsBc;
 
+      msg.latency_unicast = last_latency_in_ms_;
+
       publisher_status_->publish(msg);
 
       // warnings
@@ -896,6 +898,7 @@ private:
       RCLCPP_WARN(logger_, "[%s] Latency: %.1f ms", name_.c_str(), latency_in_us / 1000.0);
     }
     last_on_latency_ = std::chrono::steady_clock::now();
+    last_latency_in_ms_ = (uint16_t)(latency_in_us / 1000.0);
   }
 
 private:
@@ -949,6 +952,7 @@ private:
   // link statistics
   rclcpp::TimerBase::SharedPtr link_statistics_timer_;
   std::chrono::time_point<std::chrono::steady_clock> last_on_latency_;
+  uint16_t last_latency_in_ms_;
   float warning_freq_;
   float max_latency_;
   float min_ack_rate_;
