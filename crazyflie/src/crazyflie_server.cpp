@@ -821,23 +821,23 @@ private:
       publisher_status_->publish(msg);
 
       // warnings
-      if (msg.num_rx_unicast > msg.num_tx_unicast) {
-        RCLCPP_WARN(logger_, "Unexpected number of unicast packets. Sent: %d. Received: %d", msg.num_tx_unicast, msg.num_rx_unicast);
+      if (msg.num_rx_unicast > msg.num_tx_unicast * 1.05 /*allow some slack*/) {
+        RCLCPP_WARN(logger_, "[%s] Unexpected number of unicast packets. Sent: %d. Received: %d", name_.c_str(), msg.num_tx_unicast, msg.num_rx_unicast);
       }
       if (msg.num_tx_unicast > 0) {
         float unicast_receive_rate = msg.num_rx_unicast / (float)msg.num_tx_unicast;
         if (unicast_receive_rate < min_unicast_receive_rate_) {
-          RCLCPP_WARN(logger_, "Low unicast receive rate (%.2f < %.2f). Sent: %d. Received: %d", unicast_receive_rate, min_unicast_receive_rate_, msg.num_tx_unicast, msg.num_rx_unicast);
+          RCLCPP_WARN(logger_, "[%s] Low unicast receive rate (%.2f < %.2f). Sent: %d. Received: %d", name_.c_str(), unicast_receive_rate, min_unicast_receive_rate_, msg.num_tx_unicast, msg.num_rx_unicast);
         }
       }
 
-      if (msg.num_rx_broadcast > msg.num_tx_broadcast) {
-        RCLCPP_WARN(logger_, "Unexpected number of broadcast packets. Sent: %d. Received: %d", msg.num_tx_broadcast, msg.num_rx_broadcast);
+      if (msg.num_rx_broadcast > msg.num_tx_broadcast * 1.05 /*allow some slack*/) {
+        RCLCPP_WARN(logger_, "[%s] Unexpected number of broadcast packets. Sent: %d. Received: %d", name_.c_str(), msg.num_tx_broadcast, msg.num_rx_broadcast);
       }
       if (msg.num_tx_broadcast > 0) {
         float broadcast_receive_rate = msg.num_rx_broadcast / (float)msg.num_tx_broadcast;
         if (broadcast_receive_rate < min_broadcast_receive_rate_) {
-          RCLCPP_WARN(logger_, "Low broadcast receive rate (%.2f < %.2f). Sent: %d. Received: %d", broadcast_receive_rate, min_broadcast_receive_rate_, msg.num_tx_broadcast, msg.num_rx_broadcast);
+          RCLCPP_WARN(logger_, "[%s] Low broadcast receive rate (%.2f < %.2f). Sent: %d. Received: %d", name_.c_str(), broadcast_receive_rate, min_broadcast_receive_rate_, msg.num_tx_broadcast, msg.num_rx_broadcast);
         }
       }
     }
@@ -871,7 +871,7 @@ private:
     if (stats.ack_count > 0) {
       float ack_rate = stats.sent_count / stats.ack_count;
       if (ack_rate < min_ack_rate_) {
-        RCLCPP_WARN(logger_, "Ack rate: %.1f %%", name_.c_str(), ack_rate * 100);
+        RCLCPP_WARN(logger_, "[%s] Ack rate: %.1f %%", name_.c_str(), ack_rate * 100);
       }
     }
 
@@ -895,7 +895,7 @@ private:
   void on_latency(uint64_t latency_in_us)
   {
     if (latency_in_us / 1000.0 > max_latency_) {
-      RCLCPP_WARN(logger_, "[%s] Latency: %.1f ms", name_.c_str(), latency_in_us / 1000.0);
+      RCLCPP_WARN(logger_, "[%s] High latency: %.1f ms", name_.c_str(), latency_in_us / 1000.0);
     }
     last_on_latency_ = std::chrono::steady_clock::now();
     last_latency_in_ms_ = (uint16_t)(latency_in_us / 1000.0);
@@ -1361,11 +1361,15 @@ private:
     // a) check if the rate was within specified bounds
     if (mocap_data_received_timepoints_.size() >= 2) {
       double mean_rate = 0;
+      double min_rate = std::numeric_limits<double>::max();
+      double max_rate = 0;
       int num_rates_wrong = 0;
       for (size_t i = 0; i < mocap_data_received_timepoints_.size() - 1; ++i) {
         std::chrono::duration<double> diff = mocap_data_received_timepoints_[i+1] - mocap_data_received_timepoints_[i];
         double rate = 1.0 / diff.count();
         mean_rate += rate;
+        min_rate = std::min(min_rate, rate);
+        max_rate = std::max(max_rate, rate);
         if (rate <= mocap_min_rate_ || rate >= mocap_max_rate_) {
           num_rates_wrong++;
         }
@@ -1373,7 +1377,7 @@ private:
       mean_rate /= (mocap_data_received_timepoints_.size() - 1);
 
       if (num_rates_wrong > 0) {
-        RCLCPP_WARN(logger_, "[all] Motion capture rate off (#: %d, Avg: %.1f)", num_rates_wrong, mean_rate);
+        RCLCPP_WARN(logger_, "[all] Motion capture rate off (#: %d, Avg: %.1f, Min: %.1f, Max: %.1f)", num_rates_wrong, mean_rate, min_rate, max_rate);
       }
     } else if (mocap_enabled_) {
       // b) warn if no data was received
