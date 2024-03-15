@@ -29,3 +29,4 @@ uint32 num_rx_broadcast  # number of received broadcast packets during the last 
 uint32 num_tx_broadcast  # number of broadcast packets sent during the last period
 uint32 num_rx_unicast    # number of received unicast packets during the last period
 uint32 num_tx_unicast    # number of unicast packets sent during the last period
+uint16 latency_unicast   # latency (in ms) for unicast packets

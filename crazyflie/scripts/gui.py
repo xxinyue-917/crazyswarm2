@@ -225,7 +225,7 @@ class NiceGuiNode(Node):
             battery_ok = False
         self.robotmodels[name].battery_text = battery_text
         
-        radio_text = f'{msg.rssi} dBm; Unicast: {msg.num_rx_unicast} / {msg.num_tx_unicast}; Broadcast: {msg.num_rx_broadcast} / {msg.num_tx_broadcast}'
+        radio_text = f'{msg.rssi} dBm; Unicast: {msg.num_rx_unicast} / {msg.num_tx_unicast}; Broadcast: {msg.num_rx_broadcast} / {msg.num_tx_broadcast}; Latency: {msg.latency_unicast} ms'
         self.robotmodels[name].radio_text = radio_text
 
         # save status here
