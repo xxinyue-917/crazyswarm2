@@ -31,8 +31,8 @@ except FileNotFoundError:
     print(f"File not found: {crazyflies_config_path}")
     exit(1)
 
-experiment_number = int(info["experiment"])
-info_file_path = f"info/info{experiment_number}.yaml"
+experiment_name = info["experiment"]
+info_file_path = f"info/info{experiment_name}.yaml"
 
 # file guard
 if os.path.exists(info_file_path):

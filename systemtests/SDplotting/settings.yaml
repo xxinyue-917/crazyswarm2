@@ -1,10 +1,10 @@
 ---
 # general settings
 data_dir: logs
-data_file: cf231_
+data_file: figure8
 # data_file: log129
 info_dir: info
-info_file: info_cf231_.yaml
+info_file: infofigure8.yaml
 event_name: 
 - fixedFrequency
 - estPosition
