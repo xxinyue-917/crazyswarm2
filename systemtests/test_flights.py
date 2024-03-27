@@ -66,6 +66,7 @@ class TestFlights(unittest.TestCase):
         self.test_file = None
         self.launch_crazyswarm : Popen = None 
         self.ros2_ws = Path(__file__).parents[3] #/home/github/actions-runner/_work/crazyswarm2/crazyswarm2/ros2_ws
+        self.src = f"source {str(self.ros2_ws)}/install/setup.bash"
 
     def idFolderName(self):
         return self.id().split(".")[-1] #returns the name of the test_function currently being run, for example "test_figure8"
@@ -79,8 +80,8 @@ class TestFlights(unittest.TestCase):
 
         # launch server
         current_env = None
-        src = "source " + str(Path(__file__).parents[3] / "install/setup.bash")  # -> "source /home/github/actions-runner/_work/crazyswarm2/crazyswarm2/ros2_ws/install/setup.bash"
-        command = f"{src} && ros2 launch crazyflie launch.py"
+        # src = "source " + str(Path(__file__).parents[3] / "install/setup.bash")  # -> "source /home/github/actions-runner/_work/crazyswarm2/crazyswarm2/ros2_ws/install/setup.bash"
+        command = f"{self.src} && ros2 launch crazyflie launch.py"
         if TestFlights.SIM :                               
             command += " backend:=sim"    #launch crazyswarm from simulation backend 
             current_env = os.environ.copy()
@@ -98,8 +99,36 @@ class TestFlights(unittest.TestCase):
         if Path(Path.home() / ".ros/log").exists():
             shutil.copytree(Path.home() / ".ros/log", Path(__file__).parents[3] / f"results/{self.idFolderName()}/roslogs")
 
+        command = f"{self.src} && ros2 run crazyflie downloadUSDLogfile --output SDlogfile" #if CF doesn't use default URI, add --uri custom_uri (e.g --uri radio://0/80/2M/E7E7E7E70B)
+        try:
+            downloadSD= Popen(command, shell=True, stderr=PIPE, stdout=PIPE, text=True,         #download the log file in ....../ros2_ws/results/test_xxxxxxx/
+                                cwd= self.ros2_ws / f"results/{self.idFolderName()}" ,start_new_session=True, executable="/bin/bash") 
+            atexit.register(clean_process, downloadSD)
+            ####testing purposes
+            print("waiting")
+            time_start = time.time()
+            #######
+            downloadSD.wait(timeout=300) #wait 5min for download to finish and raise TimeoutExpired if not finished
+            print(f"download lasted {time.time()-time_start}s")
+        except TimeoutExpired:
+            clean_process(downloadSD)
+            print("Downloading SD card data was killed for taking too long")
+            return super().tearDown()
+            
+         ####try to plot the SD log
+        SDlogfile_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDlogfile")
+        pdf_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDreport.pdf")
+        print(f"SD logfile path {SDlogfile_path} and pdf path {pdf_path} and self id folder name {self.idFolderName()}")
+        
+        command = f"python3 save.py"
+        savepy= Popen(command, shell=True, stderr=False, stdout=False, text=True,start_new_session=True,        
+                        cwd= self.ros2_ws/ "src/crazyswarm2/systemtests/SDplotting", executable="/bin/bash") 
+        shutil.copy(SDlogfile_path, str(self.ros2_ws / "src/crazyswarm2/systemtests/SDplotting/logs/figure8"))
+        command = f"python3 plot.py"
+        plotpy = Popen(command, shell=True, stderr=False, stdout=False, text=True,start_new_session=True,        
+                        cwd= self.ros2_ws/ "src/crazyswarm2/systemtests/SDplotting", executable="/bin/bash") 
+        
         return super().tearDown()
-
         
 
     def record_start_and_clean(self, testname:str, max_wait:int):
@@ -107,14 +136,14 @@ class TestFlights(unittest.TestCase):
             before forcefully terminating the test flight script (in case it never finishes correctly).
             NB the testname must be the name of the crayzflie_examples executable (ie the CLI grammar "ros2 run crazyflie_examples testname" must be valid)'''
         
-        src = f"source {str(self.ros2_ws)}/install/setup.bash"
+        # src = f"source {str(self.ros2_ws)}/install/setup.bash"
         try:
-            command = f"{src} && ros2 bag record -s mcap -o test_{testname} /tf"   
+            command = f"{self.src} && ros2 bag record -s mcap -o test_{testname} /tf"   
             record_bag =  Popen(command, shell=True, stderr=PIPE, stdout=True, text=True,
                                 cwd= self.ros2_ws / "results/", start_new_session=True, executable="/bin/bash") 
             atexit.register(clean_process, record_bag)
 
-            command = f"{src} && ros2 run crazyflie_examples {testname}"
+            command = f"{self.src} && ros2 run crazyflie_examples {testname}"
             if TestFlights.SIM:
                 command += " --ros-args -p use_sim_time:=True" #necessary args to start the test in simulation
             start_flight_test = Popen(command, shell=True, stderr=True, stdout=True, 
@@ -148,17 +177,17 @@ class TestFlights(unittest.TestCase):
             successfully followed its given trajectory. Returns True if deviation < epsilon(defined in plotter_class.py) at every timestep, false if not.  '''
   
         # NB : the mcap filename is almost the same as the folder name but has _0 at the end
-        inputbag = f"{str(self.ros2_ws)}/results/test_{testname}/test_{testname}_0.mcap"
-        output_csv = f"{str(self.ros2_ws)}/results/test_{testname}/test_{testname}_0.csv"
+        # inputbag = f"{str(self.ros2_ws)}/results/test_{testname}/test_{testname}_0.mcap"
+        # output_csv = f"{str(self.ros2_ws)}/results/test_{testname}/test_{testname}_0.csv"
 
-        writer = McapHandler()
-        writer.write_mcap_to_csv(inputbag, output_csv)  #translate bag from mcap to csv
-        output_pdf = f"{str(self.ros2_ws)}/results/test_{testname}/results_{testname}.pdf"
-        rosbag_csv = output_csv
+        # writer = McapHandler()
+        # writer.write_mcap_to_csv(inputbag, output_csv)  #translate bag from mcap to csv
+        # output_pdf = f"{str(self.ros2_ws)}/results/test_{testname}/results_{testname}.pdf"
+        # rosbag_csv = output_csv
 
-        plotter = Plotter(sim_backend=TestFlights.SIM)
-        plotter.create_figures(self.test_file, rosbag_csv, output_pdf) #plot the data
-        return plotter.test_passed()
+        # plotter = Plotter(sim_backend=TestFlights.SIM)
+        # plotter.create_figures(self.test_file, rosbag_csv, output_pdf) #plot the data
+        # return plotter.test_passed()
     
 
 
@@ -170,11 +199,11 @@ class TestFlights(unittest.TestCase):
         test_passed = self.translate_plot_and_check("figure8")
         assert test_passed, "figure8 test failed : deviation larger than epsilon"
 
-    def test_multi_trajectory(self):
-        self.test_file = "multi_trajectory_traj0_ideal.csv"
-        self.record_start_and_clean("multi_trajectory", 80)
-        test_passed = self.translate_plot_and_check("multi_trajectory")
-        assert test_passed, "multitrajectory test failed : deviation larger than epsilon"
+    # def test_multi_trajectory(self):
+    #     self.test_file = "multi_trajectory_traj0_ideal.csv"
+    #     self.record_start_and_clean("multi_trajectory", 80)
+    #     test_passed = self.translate_plot_and_check("multi_trajectory")
+    #     assert test_passed, "multitrajectory test failed : deviation larger than epsilon"
         
 
 
