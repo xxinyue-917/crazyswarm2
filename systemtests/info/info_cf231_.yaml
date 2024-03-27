@@ -1,0 +1,5 @@
+experiment: 184
+trajectory: figure8.csv
+timescale: 3.0
+motors: standard motors (CF)
+propellers: standard propellers (CF)
