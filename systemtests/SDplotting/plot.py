@@ -165,7 +165,7 @@ def create_figures(data_usd, settings):
         with open(info_path, "r") as f:
             info = yaml.safe_load(f)
     except FileNotFoundError:
-        print(f"File not found: {info_path}")
+        print(f"(plot.py) File not found: {info_path}")
         exit(1)
 
     title_text_parameters = f"Parameters:\n"

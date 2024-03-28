@@ -39,8 +39,8 @@ def main():
         allcfs.land(targetHeight=0.06, duration=2.0)
         timeHelper.sleep(3.0)
         
-         #disable logging
-        allcfs.setParam("usd.logging", 0)
+    #disable logging
+    allcfs.setParam("usd.logging", 0)
 
 
 if __name__ == '__main__':

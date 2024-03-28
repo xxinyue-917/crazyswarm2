@@ -12,7 +12,7 @@ info = {}
 # experiment_number = int(input("Enter the experiment number: "))
 
 # File paths
-crazyflies_config_path = "../crazyflie/config/crazyflies.yaml"
+crazyflies_config_path = "../../crazyflie/config/crazyflies.yaml"
 
 # Read information from crazyflies.yaml
 try:
@@ -28,7 +28,7 @@ try:
             for key, value in obj["ctrlLee"].items():
                 info[key] = value
 except FileNotFoundError:
-    print(f"File not found: {crazyflies_config_path}")
+    print(f"(save.py) File not found: {crazyflies_config_path}")
     exit(1)
 
 experiment_name = info["experiment"]
@@ -37,10 +37,10 @@ info_file_path = f"info/info{experiment_name}.yaml"
 # file guard
 if os.path.exists(info_file_path):
     print(f"File already exists: {info_file_path}")
-    ans = input("Overwrite? [y/n]: ")
-    if ans == "n":
-        print("Exiting...")
-        exit(1)
+    # ans = input("Overwrite? [y/n]: ")
+    # if ans == "n":
+    #     print("Exiting...")
+    #     exit(1)
 
 print("========================================")
 
