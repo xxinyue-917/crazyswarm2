@@ -10,6 +10,7 @@ import time
 import signal
 import atexit
 from argparse import ArgumentParser, Namespace
+from SDplotting import save, plot
 
 #############################
 
@@ -120,24 +121,33 @@ class TestFlights(unittest.TestCase):
         pdf_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDreport.pdf")
         print(f"SD logfile path {SDlogfile_path} and pdf path {pdf_path} and self id folder name {self.idFolderName()}")
         
-        command = f"python3 save.py"
-        savepy= Popen(command, shell=True, stderr=False, stdout=False, text=True,start_new_session=True,        
-                        cwd= self.ros2_ws/ "src/crazyswarm2/systemtests/SDplotting", executable="/bin/bash") 
-        atexit.register(clean_process, savepy)
-        savepy.wait(timeout=5)
+        # write_info()
+        # # command = f"python3 save.py"
+        # # savepy= Popen(command, shell=True, stderr=False, stdout=False, text=True,start_new_session=True,        
+        # #                 cwd= self.ros2_ws/ "src/crazyswarm2/systemtests/SDplotting", executable="/bin/bash") 
+        # # atexit.register(clean_process, savepy)
+        # # savepy.wait(timeout=5)
+        # print("savepy finished")
+        # shutil.copy(SDlogfile_path, str(self.ros2_ws / "src/crazyswarm2/systemtests/SDplotting/logs/figure8"))
+        # # command = f"python3 plot.py"
+        # # plotpy = Popen(command, shell=True, stderr=False, stdout=False, text=True,start_new_session=True,        
+        # #                 cwd= self.ros2_ws/ "src/crazyswarm2/systemtests/SDplotting", executable="/bin/bash") 
+        # # atexit.register(clean_process, plotpy)
+        # # plotpy.wait(timeout=5)
+        # plot_SD_data()
+        # print("plotpy finished")
+        # if(Path(self.ros2_ws / "src/crazyswarm2/systemtests/SDplotting/reports/figure8.pdf").exists()): 
+        #     shutil.copy(str(self.ros2_ws / "src/crazyswarm2/systemtests/SDplotting/reports/figure8.pdf"), 
+        #                 str(self.ros2_ws / "results/test_figure8/SDreport.pdf"))
+        # else:
+        #     print("ERROR couldn't copy figure8.pdf to results because wasn't there")
+
+
+        save.write_info()
         print("savepy finished")
-        shutil.copy(SDlogfile_path, str(self.ros2_ws / "src/crazyswarm2/systemtests/SDplotting/logs/figure8"))
-        command = f"python3 plot.py"
-        plotpy = Popen(command, shell=True, stderr=False, stdout=False, text=True,start_new_session=True,        
-                        cwd= self.ros2_ws/ "src/crazyswarm2/systemtests/SDplotting", executable="/bin/bash") 
-        atexit.register(clean_process, plotpy)
-        plotpy.wait(timeout=5)
+        plot.plot_SD_data(logfile = SDlogfile_path, output = str(self.ros2_ws / "results/test_figure8/SDreport.pdf"))
         print("plotpy finished")
-        if(Path(self.ros2_ws / "src/crazyswarm2/systemtests/SDplotting/reports/figure8.pdf").exists()): 
-            shutil.copy(str(self.ros2_ws / "src/crazyswarm2/systemtests/SDplotting/reports/figure8.pdf"), 
-                        str(self.ros2_ws / "results/test_figure8/SDreport.pdf"))
-        else:
-            print("ERROR couldn't copy figure8.pdf to results because wasn't there")
+
         return super().tearDown()
         
 

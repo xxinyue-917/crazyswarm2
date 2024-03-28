@@ -5,7 +5,7 @@ Tool for yaml-based automatic report generation from logged data of the crazyfli
 
 # attidtue best: 22
 
-import cfusdlog
+import SDplotting.cfusdlog
 import matplotlib.pyplot as plt
 import os
 import sys
@@ -14,7 +14,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 
 
-import data_helper
+import SDplotting.data_helper
 
 
 def file_guard(pdf_path):
@@ -128,7 +128,7 @@ def add_data(data, settings):
     print("...done adding data")
 
 
-def create_figures(data_usd, settings):
+def create_figures(data_usd, settings, logfile=None, out=None):
     debug_all = False
     debug = False
     debug_figure_number = 20 # Residual Torques
@@ -137,14 +137,20 @@ def create_figures(data_usd, settings):
     # debug_figure_number = 6 # payload positions
     # debug_figure_number = 7 # payload velocities
 
-
-    log_path = os.path.join(settings["data_dir"], settings['data_file'])
+    if logfile != None :
+        log_path = logfile
+    else:   #choose default log file path given in settings.yaml if no specific path given
+        log_path = os.path.join(settings["data_dir"], settings['data_file'])
+    
     print("log file: {}".format(log_path))
 
     data_processed = process_data(data_usd, settings)
 
     # create a PDF to save the figures
-    pdf_path =  os.path.join(settings["output_dir"], settings['data_file']) + ".pdf"
+    if out!= None:
+        pdf_path = out
+    else:   #choose default pdf path in settings.yaml if no specifif one given
+        pdf_path =  os.path.join(settings["output_dir"], settings['data_file']) + ".pdf"
     print("output path: {}".format(pdf_path))
 
     # check if user wants to overwrite the report file
@@ -299,7 +305,8 @@ def create_figures(data_usd, settings):
     pdf_pages.close()
 
 
-if __name__ == "__main__":
+def plot_SD_data(logfile=None, output = None):
+
     # change the current working directory to the directory of this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -309,11 +316,18 @@ if __name__ == "__main__":
         settings = yaml.load(f, Loader=yaml.FullLoader)
 
     # decode binary log data
-    path = os.path.join(settings["data_dir"], settings['data_file'])
+    if logfile != None :
+        path = logfile
+    else:   #choose default path given in settings.yaml
+        path = os.path.join(settings["data_dir"], settings['data_file'])
     print(f"Processing {path}...")
-    data_usd = cfusdlog.decode(path)
+    data_usd = SDplotting.cfusdlog.decode(path)
 
     # create the figures
     print("...creating figures")
-    create_figures(data_usd, settings)
+    create_figures(data_usd, settings, out=output)
     print("...done creating figures")
+
+    
+if __name__ == "__main__":
+    plot_SD_data()
