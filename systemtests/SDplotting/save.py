@@ -14,7 +14,7 @@ def write_info():
     # experiment_number = int(input("Enter the experiment number: "))
 
     # File paths
-    crazyflies_config_path = "crazyflie/config/crazyflies.yaml"
+    crazyflies_config_path = "../crazyflie/config/crazyflies.yaml"
 
     # Read information from crazyflies.yaml
     try:
