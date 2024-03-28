@@ -141,7 +141,7 @@ class TestFlights(unittest.TestCase):
             command = f"{self.src} && ros2 run crazyflie_examples {testname}"
             if TestFlights.SIM:
                 command += " --ros-args -p use_sim_time:=True" #necessary args to start the test in simulation
-            start_flight_test = Popen(command, shell=True, stderr=False, stdout=False, 
+            start_flight_test = Popen(command, shell=True, stderr=PIPE, stdout=PIPE, 
                                     start_new_session=True, text=True, executable="/bin/bash")
             atexit.register(clean_process, start_flight_test)
 
