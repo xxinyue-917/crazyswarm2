@@ -89,7 +89,7 @@ class TestFlights(unittest.TestCase):
         self.launch_crazyswarm = Popen(command, shell=True, stderr=PIPE, stdout=PIPE, text=True,
                                 start_new_session=True, executable="/bin/bash", env=current_env)
         atexit.register(clean_process, self.launch_crazyswarm)  #atexit helps us to make sure processes are cleaned even if script exits unexpectedly
-        time.sleep(3)
+        time.sleep(5)
 
     # runs once per test_ function
     def tearDown(self) -> None:
@@ -120,8 +120,10 @@ class TestFlights(unittest.TestCase):
         SDlogfile_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDlogfile")
         pdf_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDreport.pdf")
         print(f"SD logfile path {SDlogfile_path} and pdf path {pdf_path} and self id folder name {self.idFolderName()}")
-        save.write_info()
-        plot.plot_SD_data(logfile = SDlogfile_path, output = str(self.ros2_ws / "results/test_figure8/SDreport.pdf"))
+        test_name = self.test_file[:self.test_file.rfind("_ideal_traj")]  #strip the end of the test_file string to just keep the name
+        save.write_info(experiment=test_name, ros2_ws_path=str(self.ros2_ws))
+        plot.plot_SD_data(output = str(self.ros2_ws / f"results/{self.idFolderName()}/SDreport.pdf"), 
+                          logfile = SDlogfile_path, experiment = test_name, ros2_ws = self.ros2_ws)
 
         return super().tearDown()
         
@@ -195,7 +197,7 @@ class TestFlights(unittest.TestCase):
         # assert test_passed, "figure8 test failed : deviation larger than epsilon"
 
     # def test_multi_trajectory(self):
-    #     self.test_file = "multi_trajectory_traj0_ideal.csv"
+    #     self.test_file = "multi_trajectory_ideal_traj0.csv"
     #     self.record_start_and_clean("multi_trajectory", 80)
     #     test_passed = self.translate_plot_and_check("multi_trajectory")
     #     assert test_passed, "multitrajectory test failed : deviation larger than epsilon"

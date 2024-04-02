@@ -6,7 +6,7 @@ import os
 import yaml
 
 
-def write_info():
+def write_info(experiment=None, ros2_ws_path=None):
     # Dictionary to store extracted information
     info = {}
 
@@ -15,6 +15,11 @@ def write_info():
 
     # File paths
     crazyflies_config_path = "../crazyflie/config/crazyflies.yaml"
+    print("cwd : ", os.path.abspath(os.getcwd()))
+    if ros2_ws_path != None:
+        crazyflies_config_path = str(ros2_ws_path) + "/src/crazyswarm2/crazyflie/config/crazyflies.yaml"
+        info_file_prepath = str(ros2_ws_path) + "/src/crazyswarm2/systemtests"
+        
 
     # Read information from crazyflies.yaml
     try:
@@ -33,12 +38,19 @@ def write_info():
         print(f"(save.py) File not found: {crazyflies_config_path}")
         exit(1)
 
-    experiment_name = info["experiment"]
-    info_file_path = f"systemtests/SDplotting/info/info{experiment_name}.yaml"
 
+    print("info", info)
+    if experiment != None:
+        info["experiment"] = experiment
+        info["trajectory"] = str(experiment) + ".csv"
+        
+    experiment_name = info["experiment"]
+    info_file_path = info_file_prepath + f"/SDplotting/info/info_{experiment_name}.yaml"
+    # info_file_path = str(ros2_ws_path) + f"systemtests/SDplotting/info/info{experiment_name}.yaml"
+    
     # file guard
     if os.path.exists(info_file_path):
-        print(f"File already exists: {info_file_path}")
+        print(f"File already exists: {info_file_path}  It will be replaced")
         # ans = input("Overwrite? [y/n]: ")
         # if ans == "n":
         #     print("Exiting...")
@@ -59,4 +71,4 @@ def write_info():
     print("========================================")
 
 if __name__ == "__main__":
-    write_info()
+    write_info("multi_trajectory", "/home/jthevenoz/ros2_ws")

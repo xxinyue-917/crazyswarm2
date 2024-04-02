@@ -128,7 +128,7 @@ def add_data(data, settings):
     print("...done adding data")
 
 
-def create_figures(data_usd, settings, logfile=None, out=None):
+def create_figures(data_usd, settings, logfile=None, out=None, ros2_ws=None, experiment=None):
     debug_all = False
     debug = False
     debug_figure_number = 20 # Residual Torques
@@ -165,6 +165,8 @@ def create_figures(data_usd, settings, logfile=None, out=None):
 
     # read the parameters from the info file
     info_path = os.path.join(settings['info_dir'], settings["info_file"])
+    if ros2_ws != None and experiment != None:
+        info_path = str(ros2_ws) + f"/src/crazyswarm2/systemtests/SDplotting/info/info_{experiment}.yaml"
     print("... reading info file: {}".format(info_path))
 
     try:
@@ -305,7 +307,7 @@ def create_figures(data_usd, settings, logfile=None, out=None):
     pdf_pages.close()
 
 
-def plot_SD_data(logfile=None, output = None):
+def plot_SD_data(logfile=None, output = None, experiment=None, ros2_ws = None):
 
     # change the current working directory to the directory of this file
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -314,6 +316,10 @@ def plot_SD_data(logfile=None, output = None):
     settings_file = "settings.yaml"
     with open(settings_file, 'r') as f:
         settings = yaml.load(f, Loader=yaml.FullLoader)
+    
+    if experiment != None:
+        settings["data_file"] = experiment
+        settings["info_file"] = "info_" + experiment + ".csv"
 
     # decode binary log data
     if logfile != None :
@@ -325,7 +331,7 @@ def plot_SD_data(logfile=None, output = None):
 
     # create the figures
     print("...creating figures")
-    create_figures(data_usd, settings, out=output)
+    create_figures(data_usd, settings, out=output, ros2_ws=ros2_ws, experiment=experiment)
     print("...done creating figures")
 
     
