@@ -95,7 +95,7 @@ class TestFlights(unittest.TestCase):
     def tearDown(self) -> None:
         clean_process(self.launch_crazyswarm)   #kill crazyswarm_server and all of its child processes
         # print_PIPE(self.launch_crazyswarm, "launch_crazyswarm")  #this will always print all of the STDOUT and STDERR since we killed it beforehand. Not smart ?
-
+        time.sleep(3)  #give some time for crazyflie_server to shut down completely before starting the USD download
         # copy .ros/log files to results folder
         if Path(Path.home() / ".ros/log").exists():
             shutil.copytree(Path.home() / ".ros/log", Path(__file__).parents[3] / f"results/{self.idFolderName()}/roslogs")

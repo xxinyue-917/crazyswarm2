@@ -94,12 +94,12 @@ all:
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
       controller: 2 # 1: PID, 2: mellinger
-    ctrlLeeInfo:
-      experiment: figure8
-      trajectory: figure8.csv   #translation_y.csv  # yaw0.csv # # # 
-      timescale: 3.0   # 0.75 # #0.34 
-      motors: standard motors (CF)
-      propellers: standard propellers (CF)
+    # ctrlLeeInfo:
+    #   experiment: figure8
+    #   trajectory: figure8.csv   #translation_y.csv  # yaw0.csv # # # 
+      # timescale: 3.0   # 0.75 # #0.34 
+      # motors: standard motors (CF)
+      # propellers: standard propellers (CF)
 
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
