@@ -36,20 +36,9 @@ def file_guard(pdf_path):
 
 def process_data(data, settings):
     print("...processing data")
-    # print(data)
     # convert units
     event = settings["event_name"]
     
-    # data_fixedFreq = data[event[0]]
-    # data_estPos = data[event[1]]
-    print(data)
-    # print(data_fixedFreq)
-    # print(data_estPos)
-    
-    # if settings["convert_units"]:
-    #     for key, value in settings["convert_units"].items():
-    #         data_fixedFreq[key] = data_fixedFreq[key] * value
-    #         data_estPos[key] = data_estPos[key] * value
     
     # if we have a list of events we need to iterate over each individually
     if type(event) == list :        
