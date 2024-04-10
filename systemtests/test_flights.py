@@ -115,15 +115,20 @@ class TestFlights(unittest.TestCase):
             clean_process(downloadSD)
             print("Downloading SD card data was killed for taking too long")
             return super().tearDown()
-            
-         ####try to plot the SD log
+        
+          
+            ####try to plot the SD log
         SDlogfile_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDlogfile")
-        pdf_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDreport.pdf")
-        print(f"SD logfile path {SDlogfile_path} and pdf path {pdf_path} and self id folder name {self.idFolderName()}")
+        # pdf_path = str(self.ros2_ws / f"results/{self.idFolderName()}/SDreport.pdf")
         test_name = self.test_file[:self.test_file.rfind("_ideal_traj")]  #strip the end of the test_file string to just keep the name
         save.write_info(experiment=test_name, ros2_ws_path=str(self.ros2_ws))
+        
+        if Path(SDlogfile_path).stat().st_size == 0: 
+            print("SDlogfile has size 0. Maybe the CF failed at writing the log on its SD card, or the downloading through radio failed. SDreport PDF cannot be generated")
+            return super().tearDown()
+
         plot.plot_SD_data(output = str(self.ros2_ws / f"results/{self.idFolderName()}/SDreport.pdf"), 
-                          logfile = SDlogfile_path, experiment = test_name, ros2_ws = self.ros2_ws)
+                        logfile = SDlogfile_path, experiment = test_name, ros2_ws = self.ros2_ws)
 
         return super().tearDown()
         
@@ -194,14 +199,14 @@ class TestFlights(unittest.TestCase):
         self.record_start_and_clean("figure8", 20)
         #create the plot etc
         test_passed = self.translate_plot_and_check("figure8")
-        # assert test_passed, "figure8 test failed : deviation larger than epsilon"
+        assert test_passed, "figure8 test failed : deviation larger than epsilon"
 
-    # def test_multi_trajectory(self):
-    #     self.test_file = "multi_trajectory_ideal_traj0.csv"
-    #     self.record_start_and_clean("multi_trajectory", 80)
-    #     test_passed = self.translate_plot_and_check("multi_trajectory")
-    #     assert test_passed, "multitrajectory test failed : deviation larger than epsilon"
-        
+
+    def test_multi_trajectory(self):
+        self.test_file = "multi_trajectory_ideal_traj0.csv"
+        self.record_start_and_clean("multi_trajectory", 80)
+        test_passed = self.translate_plot_and_check("multi_trajectory")
+        assert test_passed, "multitrajectory test failed : deviation larger than epsilon"
 
 
 

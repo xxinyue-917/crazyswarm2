@@ -146,11 +146,11 @@ class Plotter:
         landing_index = None
         i=0
         for z_coord in self.bag_z:
-            if not(airborne) and z_coord > ground_level + ground_level*(0.1): #when altitude of the drone is 10% higher than the ground level, it started takeoff
+            if not(airborne) and z_coord > ground_level + 0.05: #when altitude of the drone is 5cm above ground level, it started takeoff
                 takeoff_index = i
                 airborne = True
                 print(f"takeoff time is {self.bag_times[takeoff_index]}s")
-            if airborne and z_coord <= ground_level + ground_level*(0.1): #find when it lands again
+            if airborne and z_coord < ground_level + 0.05: #find when it lands again
                 landing_index = i
                 print(f"landing time is {self.bag_times[landing_index]}s")
                 break

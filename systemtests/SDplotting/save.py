@@ -15,7 +15,6 @@ def write_info(experiment=None, ros2_ws_path=None):
 
     # File paths
     crazyflies_config_path = "../crazyflie/config/crazyflies.yaml"
-    print("cwd : ", os.path.abspath(os.getcwd()))
     if ros2_ws_path != None:
         crazyflies_config_path = str(ros2_ws_path) + "/src/crazyswarm2/crazyflie/config/crazyflies.yaml"
         info_file_prepath = str(ros2_ws_path) + "/src/crazyswarm2/systemtests"
@@ -39,7 +38,6 @@ def write_info(experiment=None, ros2_ws_path=None):
         exit(1)
 
 
-    print("info", info)
     if experiment != None:
         info["experiment"] = experiment
         info["trajectory"] = str(experiment) + ".csv"
