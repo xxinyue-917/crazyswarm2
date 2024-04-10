@@ -23,9 +23,6 @@ def main():
     # pm_state : 0 = on battery  1 = charging  2 = charged  3 = low power  4 = shutdown
     flight_counter = 1
     
-    #enable logging
-    allcfs.setParam("usd.logging", 1)
-
     while True:
         print('takeoff')
         allcfs.takeoff(targetHeight=1.0, duration=2.0)
