@@ -80,14 +80,12 @@ class TestFlights(unittest.TestCase):
         self.test_file = None
 
         # launch server
-        current_env = None
-        # src = "source " + str(Path(__file__).parents[3] / "install/setup.bash")  # -> "source /home/github/actions-runner/_work/crazyswarm2/crazyswarm2/ros2_ws/install/setup.bash"
         command = f"{self.src} && ros2 launch crazyflie launch.py"
         if TestFlights.SIM :                               
             command += " backend:=sim"    #launch crazyswarm from simulation backend 
             current_env = os.environ.copy()
         self.launch_crazyswarm = Popen(command, shell=True, stderr=PIPE, stdout=PIPE, text=True,
-                                start_new_session=True, executable="/bin/bash", env=current_env)
+                                start_new_session=True, executable="/bin/bash")
         atexit.register(clean_process, self.launch_crazyswarm)  #atexit helps us to make sure processes are cleaned even if script exits unexpectedly
         time.sleep(5)
 
