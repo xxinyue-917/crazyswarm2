@@ -14,8 +14,8 @@ def main():
 
     traj1 = Trajectory()
     traj1.loadcsv(Path(__file__).parent / 'data/figure8.csv')
-    
-     #enable logging
+
+    # enable logging
     allcfs.setParam("usd.logging", 1)
 
     TRIALS = 1
@@ -38,8 +38,8 @@ def main():
 
         allcfs.land(targetHeight=0.06, duration=2.0)
         timeHelper.sleep(3.0)
-        
-    #disable logging
+
+    # disable logging
     allcfs.setParam("usd.logging", 0)
 
 
