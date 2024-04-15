@@ -15,7 +15,7 @@ def main():
     n = 2  # number of distinct trajectories
 
     # enable logging
-    allcfs.setParam("usd.logging", 1)
+    allcfs.setParam('usd.logging', 1)
 
     for i in range(n):
         traj = Trajectory()
@@ -42,7 +42,7 @@ def main():
         timeHelper.sleep(3.0)
 
     # disable logging
-    allcfs.setParam("usd.logging", 0)
+    allcfs.setParam('usd.logging', 0)
 
 
 if __name__ == '__main__':

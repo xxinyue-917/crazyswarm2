@@ -16,7 +16,7 @@ def main():
     traj1.loadcsv(Path(__file__).parent / 'data/figure8.csv')
 
     # enable logging
-    allcfs.setParam("usd.logging", 1)
+    allcfs.setParam('usd.logging', 1)
 
     TRIALS = 1
     TIMESCALE = 1.0
@@ -40,7 +40,7 @@ def main():
         timeHelper.sleep(3.0)
 
     # disable logging
-    allcfs.setParam("usd.logging", 0)
+    allcfs.setParam('usd.logging', 0)
 
 
 if __name__ == '__main__':
