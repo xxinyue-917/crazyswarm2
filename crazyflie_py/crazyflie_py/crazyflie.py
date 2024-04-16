@@ -966,9 +966,9 @@ class CrazyflieServer(rclpy.node.Node):
             req.parameters = [Parameter(name=param_name, value=param_value)]
             self.setParamsService.call_async(req)
         except KeyError as e:
-            self.get_logger().error(f'(crazyflie.py)setParam : keyError raised {e}')
+            self.get_logger().warn(f'(crazyflie.py)setParam : keyError raised {e}')
         except Exception as e:
-            self.get_logger().error(f'(crazyflie.py)setParam : exception raised {e}')
+            self.get_logger().warn(f'(crazyflie.py)setParam : exception raised {e}')
 
 
     def cmdFullState(self, pos, vel, acc, yaw, omega):
