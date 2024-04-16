@@ -51,8 +51,9 @@ def print_PIPE(process : Popen, process_name, always=False):
     if process.returncode != 0 or always:
         out, err = process.communicate()
         print(f"{process_name} returncode = {process.returncode}")
-        print(f"{process_name} stderr : {err}")
-        print(f"{process_name} stdout : {out}")
+        print(f"{process_name} stderr : {err} \n")
+        print(f"{process_name} stdout : {out} \n")
+        print("\n")
     else:
         print(f"{process_name} completed sucessfully")
 
