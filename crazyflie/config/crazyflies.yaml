@@ -8,8 +8,8 @@ robots:
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
-    firmware_logging:
-      enabled: true
+    # firmware_logging:
+    #   enabled: true
     #   custom_topics:
     #     topic_name3: 
     #       frequency: 1

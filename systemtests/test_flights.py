@@ -12,7 +12,6 @@ import atexit
 from argparse import ArgumentParser, Namespace
 from SDplotting import save, plot
 
-#############################
 
 def setUpModule():
 
@@ -98,6 +97,9 @@ class TestFlights(unittest.TestCase):
         if Path(Path.home() / ".ros/log").exists():
             shutil.copytree(Path.home() / ".ros/log", Path(__file__).parents[3] / f"results/{self.idFolderName()}/roslogs")
 
+        if self.SIM:                    #if in simulation, we skip the downloading SD data part
+            return super().tearDown()
+
         command = f"{self.src} && ros2 run crazyflie downloadUSDLogfile --output SDlogfile" #if CF doesn't use default URI, add --uri custom_uri (e.g --uri radio://0/80/2M/E7E7E7E70B)
         try:
             downloadSD= Popen(command, shell=True, stderr=False, stdout=False, text=True,         #download the log file in ....../ros2_ws/results/test_xxxxxxx/
@@ -169,7 +171,7 @@ class TestFlights(unittest.TestCase):
         
         #if something went wrong with the bash command lines in Popen, print the error
         print_PIPE(record_bag, f"record_bag for {self.idFolderName()}")
-        print_PIPE(start_flight_test, f"start_flight_test for {self.idFolderName()}")
+        print_PIPE(start_flight_test, f"start_flight_test for {self.idFolderName()}", always=True)
 
         
     def translate_plot_and_check(self, testname:str) -> bool :
