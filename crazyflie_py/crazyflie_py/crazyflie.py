@@ -970,7 +970,6 @@ class CrazyflieServer(rclpy.node.Node):
         except Exception as e:
             self.get_logger().warn(f'(crazyflie.py)setParam : exception raised {e}')
 
-
     def cmdFullState(self, pos, vel, acc, yaw, omega):
         """
         Send a streaming full-state controller setpoint command.
