@@ -20,6 +20,17 @@ def generate_launch_description():
 
     server_params = crazyflies
 
+
+    # robot description
+    urdf = os.path.join(
+        get_package_share_directory('crazyflie'),
+        'urdf',
+        'crazyflie_description.urdf')
+    with open(urdf, 'r') as f:
+        robot_desc = f.read()
+    server_params["robot_description"] = robot_desc
+
+
     cf_examples_dir = get_package_share_directory('crazyflie_examples')
     bringup_dir = get_package_share_directory('nav2_bringup')
     bringup_launch_dir = os.path.join(bringup_dir, 'launch')
