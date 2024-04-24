@@ -5,6 +5,7 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 import yaml
 
+
 def generate_launch_description():
 
     # load crazyflies
@@ -18,7 +19,6 @@ def generate_launch_description():
 
     server_params = crazyflies
 
-
     # robot description
     urdf = os.path.join(
         get_package_share_directory('crazyflie'),
@@ -29,7 +29,6 @@ def generate_launch_description():
     server_params["robot_description"] = robot_desc
 
     crazyflie_name = '/cf231'
-
 
     return LaunchDescription([
         Node(
@@ -54,6 +53,6 @@ def generate_launch_description():
             name='simple_mapper_multiranger',
             output='screen',
             parameters=[
-                        {'robot_prefix': crazyflie_name}]
+                {'robot_prefix': crazyflie_name}]
         ),
     ])

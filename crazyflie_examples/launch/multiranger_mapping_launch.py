@@ -27,7 +27,6 @@ def generate_launch_description():
         robot_desc = f.read()
     server_params["robot_description"] = robot_desc
 
-
     return LaunchDescription([
         Node(
             package='crazyflie',

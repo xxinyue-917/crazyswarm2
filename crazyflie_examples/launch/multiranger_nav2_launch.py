@@ -20,7 +20,6 @@ def generate_launch_description():
 
     server_params = crazyflies
 
-
     # robot description
     urdf = os.path.join(
         get_package_share_directory('crazyflie'),
@@ -29,7 +28,6 @@ def generate_launch_description():
     with open(urdf, 'r') as f:
         robot_desc = f.read()
     server_params["robot_description"] = robot_desc
-
 
     cf_examples_dir = get_package_share_directory('crazyflie_examples')
     bringup_dir = get_package_share_directory('nav2_bringup')
@@ -84,7 +82,7 @@ def generate_launch_description():
                 'autostart': 'True',
                 'use_composition': 'True',
                 'transform_publish_period': '0.02'
-                }.items()
+            }.items()
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
