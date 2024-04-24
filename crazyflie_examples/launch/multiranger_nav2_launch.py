@@ -27,7 +27,7 @@ def generate_launch_description():
         'crazyflie_description.urdf')
     with open(urdf, 'r') as f:
         robot_desc = f.read()
-    server_params["robot_description"] = robot_desc
+    server_params['robot_description'] = robot_desc
 
     cf_examples_dir = get_package_share_directory('crazyflie_examples')
     bringup_dir = get_package_share_directory('nav2_bringup')

@@ -26,7 +26,7 @@ def generate_launch_description():
         'crazyflie_description.urdf')
     with open(urdf, 'r') as f:
         robot_desc = f.read()
-    server_params["robot_description"] = robot_desc
+    server_params['robot_description'] = robot_desc
 
     crazyflie_name = '/cf231'
 
