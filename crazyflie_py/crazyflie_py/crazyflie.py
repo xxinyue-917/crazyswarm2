@@ -471,8 +471,10 @@ class Crazyflie:
 
     def arm(self, arm=True):
         """
-        Arms the quadrotor, i.e. for a brushless or Bolt-based drone the
-        motors start spinning and flight is enabled.
+        Arms the quadrotor.
+
+        For a brushless or Bolt-based drone the motors start spinning and flight
+        is enabled.
 
         Args:
             arm (boolean): True if the motors should be armed, False otherwise.
@@ -973,8 +975,10 @@ class CrazyflieServer(rclpy.node.Node):
 
     def arm(self, arm=True):
         """
-        Broadcasted arming of the quadrotors, i.e. for a brushless or Bolt-based drone the
-        motors start spinning and flight is enabled.
+        Broadcasted arming.
+
+        For a brushless or Bolt-based drone the motors start spinning and flight
+        is enabled.
 
         Args:
             arm (boolean): True if the motors should be armed, False otherwise.
