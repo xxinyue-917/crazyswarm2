@@ -100,6 +100,7 @@ def generate_launch_description():
             name='teleop',
             remappings=[
                 ('emergency', 'all/emergency'),
+                ('arm', 'all/arm'),
                 ('takeoff', 'all/takeoff'),
                 ('land', 'all/land'),
                 # uncomment to manually control (and update teleop.yaml)
