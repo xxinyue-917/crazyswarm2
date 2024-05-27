@@ -73,6 +73,11 @@ def generate_launch_description():
     with open('tmp_motion_capture.yaml', 'w') as outfile:
         yaml.dump(motion_capture_content, outfile, default_flow_style=False, sort_keys=False)
 
+    telop_yaml_path = os.path.join(
+        get_package_share_directory('crazyflie'),
+        'config',
+        'teleop.yaml')
+
     return LaunchDescription([
         DeclareLaunchArgument('backend', default_value='cpp'),
         DeclareLaunchArgument('debug', default_value='False'),
@@ -102,7 +107,7 @@ def generate_launch_description():
                 # ('cmd_full_state', 'cf6/cmd_full_state'),
                 # ('notify_setpoints_stop', 'cf6/notify_setpoints_stop'),
             ],
-            parameters= [PythonExpression(["'teleop.yaml' if '", LaunchConfiguration('teleop_yaml_file'), "' == '' else '", LaunchConfiguration('teleop_yaml_file'), "'"])],
+            parameters= [PythonExpression(["'" + telop_yaml_path +"' if '", LaunchConfiguration('teleop_yaml_file'), "' == '' else '", LaunchConfiguration('teleop_yaml_file'), "'"])],
         ),
         Node(
             package='joy',
