@@ -484,26 +484,37 @@ class Crazyflie:
     #       '/world', '/cf' + str(self.id), rospy.Time(0))
     #     return np.array(position)
 
-    # def getParam(self, name):
-    #     """Returns the current value of the onboard named parameter.
+    def getParam(self, name):
+        """
+        Get the current value of the onboard named parameter.
 
-    #     Parameters are named values of various primitive C types that control
-    #     the firmware's behavior. For more information, see
-    #     https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/.
+        Parameters are named values of various primitive C types that control
+        the firmware's behavior. For more information, see
+        https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/userguides/logparam/.
 
-    #     Parameters are read at system startup over the radio and cached.
-    #     The ROS launch file can also be used to set parameter values at startup.
-    #     Subsequent calls to :meth:`setParam()` will update the cached value.
-    #     However, if the parameter changes for any other reason, the cached value
-    #     might become stale. This situation is not common.
+        Parameters are read at system startup over the radio and cached.
+        The ROS launch file can also be used to set parameter values at startup.
+        Subsequent calls to :meth:`setParam()` will update the cached value.
+        However, if the parameter changes for any other reason, the cached value
+        might become stale. This situation is not common.
 
-    #     Args:
-    #         name (str): The parameter's name.
+        Args:
+            name (str): The parameter's name.
 
-    #     Returns:
-    #         value (Any): The parameter's value.
-    #     """
-    #     return rospy.get_param(self.prefix + '/' + name)
+        Returns:
+            value (Any): The parameter's value.
+        """
+        param_name = self.prefix[1:] + '.params.' + name
+        req = GetParameters.Request()
+        req.names = [param_name]
+        future = self.getParamsService.call_async(req)
+        rclpy.spin_until_future_complete(self.node, future)
+        param_type = self.paramTypeDict[name]
+        if param_type == ParameterType.PARAMETER_INTEGER:
+            param_value = future.result().values[0].integer_value
+        elif param_type == ParameterType.PARAMETER_DOUBLE:
+            param_value = future.result().values[0].double_value
+        return param_value
 
     def setParam(self, name, value):
         """
