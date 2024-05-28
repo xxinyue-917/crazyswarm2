@@ -503,6 +503,7 @@ class Crazyflie:
 
         Returns:
             value (Any): The parameter's value.
+
         """
         param_name = self.prefix[1:] + '.params.' + name
         req = GetParameters.Request()
