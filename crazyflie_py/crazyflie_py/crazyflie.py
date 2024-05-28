@@ -141,11 +141,11 @@ class Crazyflie:
         self.status = {}
 
         # Query some settings
-        getParamsService = node.create_client(GetParameters, '/crazyflie_server/get_parameters')
-        getParamsService.wait_for_service()
+        self.getParamsService = node.create_client(GetParameters, '/crazyflie_server/get_parameters')
+        self.getParamsService.wait_for_service()
         req = GetParameters.Request()
         req.names = ['robots.{}.initial_position'.format(cfname), 'robots.{}.uri'.format(cfname)]
-        future = getParamsService.call_async(req)
+        future = self.getParamsService.call_async(req)
         while rclpy.ok():
             rclpy.spin_once(node)
             if future.done():
