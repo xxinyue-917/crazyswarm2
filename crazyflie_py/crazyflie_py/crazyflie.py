@@ -511,10 +511,16 @@ class Crazyflie:
         future = self.getParamsService.call_async(req)
         rclpy.spin_until_future_complete(self.node, future)
         param_type = self.paramTypeDict[name]
-        if param_type == ParameterType.PARAMETER_INTEGER:
-            param_value = future.result().values[0].integer_value
-        elif param_type == ParameterType.PARAMETER_DOUBLE:
-            param_value = future.result().values[0].double_value
+        try:
+            if param_type == ParameterType.PARAMETER_INTEGER:
+                param_value = future.result().values[0].integer_value
+            elif param_type == ParameterType.PARAMETER_DOUBLE:
+                param_value = future.result().values[0].double_value
+        except KeyError as e:
+            self.get_logger().warn(f'(crazyflie.py)getParam : keyError raised {e}')
+        except Exception as e:
+            self.get_logger().warn(f'(crazyflie.py)getParam : exception raised {e}')
+
         return param_value
 
     def setParam(self, name, value):
