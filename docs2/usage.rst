@@ -121,8 +121,7 @@ Positioning
 -----------
 
 The Crazyflie can be positioned in different ways, including motion capture and onboard positioning.
-This blogpost provides a good overview of the different positioning systems if you are unsure about which one you are using: `Positioning System Overview
- <https://www.bitcraze.io/2021/05/positioning-system-overview/>`_.
+This blogpost provides a good overview of the different positioning systems if you are unsure about which one you are using: `Positioning System Overview <https://www.bitcraze.io/2021/05/positioning-system-overview/>`_.
 
 Motion capture
 ~~~~~~~~~~~~~~
