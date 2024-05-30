@@ -157,10 +157,8 @@ In this case you do not need to receive positioning from an external system like
 
 Instructions per positioing system.:
 * The `Loco positioning system <https://www.bitcraze.io/documentation/system/positioning/loco-positioning-system/>`_ - Follow Bitcraze's tutorial `here <https://www.bitcraze.io/documentation/tutorials/getting-started-with-loco-positioning-system/>`.
-* The `Lighthouse positioning system <https://www.bitcraze.io/documentation/system/positioning/lighthouse/>`_ - Follow Bitcraze's tutorial `here <https://www.bitcraze.io/documentation/tutorials/getting-started-with-lighthouse-positioning-system/>`.
-  * Make sure to review the system management for saving and loading a system config, such that you don't have to redo the basestation geometry estimation for each crazyflie.
-* The `Flow deck <https://www.bitcraze.io/products/flow-deck-v2/>`_ - Follow Bitcraze's tutorial `here <https://www.bitcraze.io/documentation/tutorials/getting-started-with-flow-deck/>`.
-  * Note that the flow deck provides an relative positoing estimate and might conflict when you are flying with crazyswarm2 if you are flying with absolute coordinates instead of relative ones.
+* The `Lighthouse positioning system <https://www.bitcraze.io/documentation/system/positioning/lighthouse/>`_ - Follow Bitcraze's tutorial `here <https://www.bitcraze.io/documentation/tutorials/getting-started-with-lighthouse-positioning-system/>`. Make sure to review the system management for saving and loading a system config, such that you don't have to redo the basestation geometry estimation for each crazyflie.
+* The `Flow deck <https://www.bitcraze.io/products/flow-deck-v2/>`_ - Follow Bitcraze's tutorial `here <https://www.bitcraze.io/documentation/tutorials/getting-started-with-flow-deck/>`. Note that the flow deck provides an relative positoing estimate and might conflict when you are flying with crazyswarm2 if you are flying with absolute coordinates instead of relative ones.
 
 Also in this case, make sure that motion_capture is disabled in the crazyflies.yaml file:
 
