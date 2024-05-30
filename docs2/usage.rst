@@ -12,8 +12,8 @@ Usage
 
 
 .. warning::
-    If you work in a shared network (lab, classroom) or similar, you might want to avoid 
-    controlling other robots. This is in particular true for simulation. In this case, 
+    If you work in a shared network (lab, classroom) or similar, you might want to avoid
+    controlling other robots. This is in particular true for simulation. In this case,
     you can use
 
     .. code-block:: bash
@@ -29,7 +29,7 @@ Usage
 Configuration
 -------------
 
-All configuration files are in crazyflie/config. 
+All configuration files are in crazyflie/config.
 
 * crazyflies.yaml : setting up everything related to the robots.
 * server.yaml : setting up everything related to the server.
@@ -40,7 +40,7 @@ crazyflies.yaml
 ~~~~~~~~~~~~~~~
 
 Each crazyflie should have an unique URI which can `be changed in Bitcraze's CFclient <https://www.bitcraze.io/documentation/repository/crazyflie-clients-python/master/userguides/userguide_client/#firmware-configuration/>`_.
-They can also be enabled in case you don't want the server to connect with it. 
+They can also be enabled in case you don't want the server to connect with it.
 
 .. code-block:: yaml
 
@@ -109,13 +109,33 @@ The yaml file also contain an 'all' field, in case you have parameters or loggin
                 estimator: 2 # 1: complementary, 2: kalman
                 controller: 2 # 1: PID, 2: mellinger
 
-The above also contains an example of the firmware_logging field, where default topics can be enabled or custom topics based on the `existing log toc of the crazyflie <https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/api/logs//>`_. 
-Moreover, it also contains the firmware_params field, where parameters can be set at startup. 
-Also see the `parameter list of the crazyflie <https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/api/params//>`_ for that. 
+The above also contains an example of the firmware_logging field, where default topics can be enabled or custom topics based on the `existing log toc of the crazyflie <https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/api/logs//>`_.
+Moreover, it also contains the firmware_params field, where parameters can be set at startup.
+Also see the `parameter list of the crazyflie <https://www.bitcraze.io/documentation/repository/crazyflie-firmware/master/api/params//>`_ for that.
 
 
 Mind that you can also place the firmware_params and firmware_logging fields per crazyflie in 'robots'  or the 'robot_types' field.
-The server node will upon initialization, first look at the params/logs from the individual crazyflie's settings, then the robot_types, and then anything in 'all' which has lowest priority.  
+The server node will upon initialization, first look at the params/logs from the individual crazyflie's settings, then the robot_types, and then anything in 'all' which has lowest priority.
+
+Positioning
+-----------
+
+Motion capture
+~~~~~~~~~~~~~~
+
+If you have a motion capture system, you can input the specifics in the motion_capture.yaml file.
+
+.. code-block:: yaml
+    /motion_capture_tracking:
+        ros__parameters:
+            type: "optitrack"
+            hostname: "optitrackPC"
+
+'Type' can replaced by "optitrack", "vicon", "qualisys" or any of the other supported motion capture systems of the `motion capture tracking package <https://github.com/IMRCLab/motion_capture_tracking/tree/ros2/>`_.
+'hostname' is the hostname of the computer running the motion capture software which can either be the PC name or the IP.
+
+
+
 
 
 Simulation

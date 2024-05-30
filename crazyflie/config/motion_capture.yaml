@@ -1,9 +1,9 @@
 /motion_capture_tracking:
   ros__parameters:
+    # one of "optitrack", "optitrack_closed_source", "vicon", "qualisys", "nokov", "vrpn", "motionanalysis"
     type: "optitrack"
+    # Specify the hostname or IP of the computer running the motion capture software
     hostname: "141.23.110.143"
-
-    mode: "libobjecttracker" # one of motionCapture,libRigidBodyTracker
 
     topics:
       poses:
