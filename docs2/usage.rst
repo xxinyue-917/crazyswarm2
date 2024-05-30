@@ -129,6 +129,7 @@ Motion capture
 If you have a motion capture system, you can input the specifics in the motion_capture.yaml file.
 
 .. code-block:: yaml
+
     /motion_capture_tracking:
         ros__parameters:
             type: "optitrack"
@@ -140,6 +141,7 @@ If you have a motion capture system, you can input the specifics in the motion_c
 Also make sure that in crazyflies.yaml, the motion_capture field is enabled for the specific robot type, or that the crazyflie is of a type that supports motion capture.
 
 .. code-block:: yaml
+
     robot_types:
     cf21:
         motion_capture:
@@ -163,6 +165,7 @@ Instructions per positioing system.:
 Also in this case, make sure that motion_capture is disabled in the crazyflies.yaml file:
 
 .. code-block:: yaml
+
     robot_types:
     cf21:
         motion_capture:
@@ -171,6 +174,7 @@ Also in this case, make sure that motion_capture is disabled in the crazyflies.y
 Also it is a good idea to turn on pose estimation logging such that you are able to see the poses and transforms of the Crazyflie updated in real life in rviz or the Swarm management gui.
 
 .. code-block:: yaml
+
     all:
 
     firmware_logging:
