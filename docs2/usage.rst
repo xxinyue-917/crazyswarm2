@@ -179,6 +179,9 @@ Also it is a good idea to turn on pose estimation logging such that you are able
             pose:
             frequency: 10 # Hz
 
+
+Moreover, be aware that the motion capture node is enabled in the launch file by default, which can be turned off by adding 'mocap:=False' to the launch command.
+
 Simulation
 ----------
 
