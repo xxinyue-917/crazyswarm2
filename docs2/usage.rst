@@ -143,9 +143,9 @@ Also make sure that in crazyflies.yaml, the motion_capture field is enabled for 
 .. code-block:: yaml
 
     robot_types:
-    cf21:
-        motion_capture:
-        enabled: true
+        cf21:
+            motion_capture:
+            enabled: true
 
 For more indepth information about the motion capture tracking package, see the `documentation <https://github.com/IMRCLab/motion_capture_tracking/tree/ros2/>`_.
 
@@ -165,23 +165,19 @@ Also in this case, make sure that motion_capture is disabled in the crazyflies.y
 .. code-block:: yaml
 
     robot_types:
-    cf21:
-        motion_capture:
-        enabled: false
+        cf21:
+            motion_capture:
+            enabled: false
 
 Also it is a good idea to turn on pose estimation logging such that you are able to see the poses and transforms of the Crazyflie updated in real life in rviz or the Swarm management gui.
 
 .. code-block:: yaml
 
-    all:
-
     firmware_logging:
         enabled: true
         default_topics:
-        # remove to disable default topic
-        pose:
+            pose:
             frequency: 10 # Hz
-
 
 Simulation
 ----------
