@@ -30,18 +30,18 @@ First Installation
         sudo apt install libboost-program-options-dev libusb-1.0-0-dev
         pip3 install rowan nicegui
 
-   Then install the motion capture ROS 2 package for your ROS distro
+   Then install the motion capture ROS 2 package (replace DISTRO with your version of ROS, namely humble or iron):
 
     .. code-block:: bash
 
-        sudo apt-get ros-*DISTRO*-motion-capture-tracking 
+        sudo apt-get ros-DISTRO-motion-capture-tracking 
 
     If you are planning to use the CFlib backend, do:
 
     .. code-block:: bash
         
         pip3 install cflib transforms3d
-        sudo apt-get install ros-*DISTRO*-tf-transformations
+        sudo apt-get install ros-DISTRO-tf-transformations
 
 3. Set up your ROS 2 workspace
 
