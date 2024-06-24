@@ -34,7 +34,7 @@ First Installation
 
     .. code-block:: bash
 
-        sudo apt-get ros-DISTRO-motion-capture-tracking 
+        sudo apt-get install ros-DISTRO-motion-capture-tracking 
 
     If you are planning to use the CFlib backend, do:
 
