@@ -37,7 +37,7 @@ in another terminal run:
 
 .. code-block:: bash
 
-    ros2 run teleop_twist_keyboard telop_twist_keyboard
+    ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 Use 't' to take off, and 'b' to land. For the rest, use the instructions of the telop package. 
 
