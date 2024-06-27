@@ -201,14 +201,14 @@ Let's first look at the launch file real quick (multiranger_mapping_launch.py):
             output='screen',
             parameters=[{"hover_height": 0.3},
                         {"incoming_twist_topic": "/cmd_vel"},
-                        {"robot_prefix": "/cf1"}]
+                        {"robot_prefix": "/cf231"}]
         ),
         Node(
         parameters=[
           {'odom_frame': 'odom'},
-          {'map_frame': 'world'},
-          {'base_frame': 'cf1'},
-          {'scan_topic': '/cf1/scan'},
+          {'map_frame': 'map'},
+          {'base_frame': 'cf231'},
+          {'scan_topic': '/cf231/scan'},
           {'use_scan_matching': False},
           {'max_laser_range': 3.5},
           {'resolution': 0.1},
@@ -224,7 +224,7 @@ Let's first look at the launch file real quick (multiranger_mapping_launch.py):
 
 Here is an explanation of the nodes:
 
-* The first node enables the crazyflie server, namely the python version (cflib) as that currently has logging enabled. This takes the crazyflies.yaml file you just edited and uses those values to set up the crazyflie.
+* The first node enables the crazyflie server, namely the python version (cflib) as that currently has logging enabled. This takes the crazyflies.yaml file you just edited and uses those values to set up the crazyflie. You might need to change some topic strings based on your Crazyflie name (`/cf231` to something else)
 * The second node is a velocity command handler, which takes an incoming twist message, makes the Crazyflie take off to a fixed height and enables velocity control of external packages (you'll see why soon enough).
 * The third node is the slam toolbox node. You noted that we gave it some different parameters, where we upped the speed of the map generation, decreased the resolution and turn of ray matching as mentioned in the warning above.
 
@@ -274,7 +274,7 @@ Now, open up a  rviv2 window in a seperate terminal with :
 
 Add the following displays and panels to RVIZ:
 
-* Changed the 'Fixed frame' to 'world
+* Changed the 'Fixed frame' to 'map'
 * 'Add' button under displays and 'by topic' tab, select the '/map' topic.
 * 'Add' button under displays and 'by display type' add a transform.
 * 'Panels' on the top menu, select 'add new panel' and select the SLAMToolBoxPlugin
