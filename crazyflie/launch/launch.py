@@ -10,8 +10,8 @@ from launch.substitutions import LaunchConfiguration, PythonExpression
 
 def parse_yaml(context):
     # Load the crazyflies YAML file
-    crazyflies_yaml_file = LaunchConfiguration('crazyflies_yaml_file').perform(context)
-    with open(crazyflies_yaml_file, 'r') as file:
+    crazyflies_yaml = LaunchConfiguration('crazyflies_yaml_file').perform(context)
+    with open(crazyflies_yaml, 'r') as file:
         crazyflies = yaml.safe_load(file)
 
     # server params
@@ -36,11 +36,7 @@ def parse_yaml(context):
     server_params[1]['robot_description'] = robot_desc
 
     # construct motion_capture_configuration
-    motion_capture_yaml = os.path.join(
-        get_package_share_directory('crazyflie'),
-        'config',
-        'motion_capture.yaml')
-    
+    motion_capture_yaml = LaunchConfiguration('motion_capture_yaml_file').perform(context)
     with open(motion_capture_yaml, 'r') as ymlfile:
         motion_capture_content = yaml.safe_load(ymlfile)
 
@@ -99,6 +95,11 @@ def generate_launch_description():
         get_package_share_directory('crazyflie'),
         'config',
         'crazyflies.yaml')
+    
+    default_motion_capture_yaml_path = os.path.join(
+        get_package_share_directory('crazyflie'),
+        'config',
+        'motion_capture.yaml')
 
     telop_yaml_path = os.path.join(
         get_package_share_directory('crazyflie'),
@@ -108,6 +109,8 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('crazyflies_yaml_file', 
                               default_value=default_crazyflies_yaml_path),
+        DeclareLaunchArgument('motion_capture_yaml_file', 
+                              default_value=default_motion_capture_yaml_path),
         DeclareLaunchArgument('backend', default_value='cpp'),
         DeclareLaunchArgument('debug', default_value='False'),
         DeclareLaunchArgument('rviz', default_value='False'),
