@@ -2,23 +2,17 @@ import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch_ros.actions import Node
 from launch.conditions import LaunchConfigurationEquals
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 
-
-def generate_launch_description():
-
-    # load crazyflies
-    crazyflies_yaml = os.path.join(
-        get_package_share_directory('crazyflie'),
-        'config',
-        'crazyflies.yaml')
-
-    with open(crazyflies_yaml, 'r') as ymlfile:
-        crazyflies = yaml.safe_load(ymlfile)
+def parse_yaml(context):
+    # Load the crazyflies YAML file
+    crazyflies_yaml_file = LaunchConfiguration('crazyflies_yaml_file').perform(context)
+    with open(crazyflies_yaml_file, 'r') as file:
+        crazyflies = yaml.safe_load(file)
 
     # server params
     server_yaml = os.path.join(
@@ -38,9 +32,10 @@ def generate_launch_description():
         get_package_share_directory('crazyflie'),
         'urdf',
         'crazyflie_description.urdf')
+    
     with open(urdf, 'r') as f:
-
         robot_desc = f.read()
+
     server_yaml_content["/crazyflie_server"]["ros__parameters"]["robot_description"] = robot_desc
 
     # construct motion_capture_configuration
@@ -48,7 +43,6 @@ def generate_launch_description():
         get_package_share_directory('crazyflie'),
         'config',
         'motion_capture.yaml')
-
     with open(motion_capture_yaml, 'r') as ymlfile:
         motion_capture_content = yaml.safe_load(ymlfile)
 
@@ -73,12 +67,22 @@ def generate_launch_description():
     with open('tmp_motion_capture.yaml', 'w') as outfile:
         yaml.dump(motion_capture_content, outfile, default_flow_style=False, sort_keys=False)
 
+
+def generate_launch_description():
+    default_crazyflies_yaml_path = os.path.join(
+        get_package_share_directory('crazyflie'),
+        'config',
+        'crazyflies.yaml')
+
     telop_yaml_path = os.path.join(
         get_package_share_directory('crazyflie'),
         'config',
         'teleop.yaml')
-
+    
     return LaunchDescription([
+        DeclareLaunchArgument('crazyflies_yaml_file', 
+                              default_value=default_crazyflies_yaml_path),
+        OpaqueFunction(function=parse_yaml),
         DeclareLaunchArgument('backend', default_value='cpp'),
         DeclareLaunchArgument('debug', default_value='False'),
         DeclareLaunchArgument('rviz', default_value='False'),
