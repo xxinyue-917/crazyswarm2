@@ -22,10 +22,9 @@ def parse_yaml(context):
 
     with open(server_yaml, 'r') as ymlfile:
         server_yaml_content = yaml.safe_load(ymlfile)
-
-    server_yaml_content["/crazyflie_server"]["ros__parameters"]['robots'] = crazyflies['robots']
-    server_yaml_content["/crazyflie_server"]["ros__parameters"]['robot_types'] = crazyflies['robot_types']
-    server_yaml_content["/crazyflie_server"]["ros__parameters"]['all'] = crazyflies['all']
+    server_yaml_content['/crazyflie_server']['ros__parameters']['robots'] = crazyflies['robots']
+    server_yaml_content['/crazyflie_server']['ros__parameters']['robot_types'] = crazyflies['robot_types']
+    server_yaml_content['/crazyflie_server']['ros__parameters']['all'] = crazyflies['all']
 
     # robot description
     urdf = os.path.join(
@@ -36,7 +35,7 @@ def parse_yaml(context):
     with open(urdf, 'r') as f:
         robot_desc = f.read()
 
-    server_yaml_content["/crazyflie_server"]["ros__parameters"]["robot_description"] = robot_desc
+    server_yaml_content['/crazyflie_server']['ros__parameters']['robot_description'] = robot_desc
 
     # construct motion_capture_configuration
     motion_capture_yaml = os.path.join(
@@ -46,27 +45,27 @@ def parse_yaml(context):
     with open(motion_capture_yaml, 'r') as ymlfile:
         motion_capture_content = yaml.safe_load(ymlfile)
 
-    motion_capture_content["/motion_capture_tracking"]["ros__parameters"]["rigid_bodies"] = dict()
-    for key, value in crazyflies["robots"].items():
-        type = crazyflies["robot_types"][value["type"]]
-        if value["enabled"] and type["motion_capture"]["enabled"]:
-            motion_capture_content["/motion_capture_tracking"]["ros__parameters"]["rigid_bodies"][key] =  {
-                    "initial_position": value["initial_position"],
-                    "marker": type["motion_capture"]["marker"],
-                    "dynamics": type["motion_capture"]["dynamics"],
+    motion_capture_content['/motion_capture_tracking']['ros__parameters']['rigid_bodies'] = dict()
+    for key, value in crazyflies['robots'].items():
+        type = crazyflies['robot_types'][value['type']]
+        if value['enabled'] and type['motion_capture']['enabled']:
+            motion_capture_content['/motion_capture_tracking']['ros__parameters']['rigid_bodies'][key] =  {
+                    'initial_position': value['initial_position'],
+                    'marker': type['motion_capture']['marker'],
+                    'dynamics': type['motion_capture']['dynamics'],
                 }
 
     # copy relevent settings to server params
-    server_yaml_content["/crazyflie_server"]["ros__parameters"]["poses_qos_deadline"] = motion_capture_content[
-        "/motion_capture_tracking"]["ros__parameters"]["topics"]["poses"]["qos"]["deadline"]
-
+    server_yaml_content['/crazyflie_server']['ros__parameters']['poses_qos_deadline'] = motion_capture_content[
+        '/motion_capture_tracking']['ros__parameters']['topics']['poses']['qos']['deadline']
+    
     # Save server and mocap in temp file such that nodes can read it out later
     with open('tmp_server.yaml', 'w') as outfile:
         yaml.dump(server_yaml_content, outfile, default_flow_style=False, sort_keys=False)
 
     with open('tmp_motion_capture.yaml', 'w') as outfile:
         yaml.dump(motion_capture_content, outfile, default_flow_style=False, sort_keys=False)
-
+    
 
 def generate_launch_description():
     default_crazyflies_yaml_path = os.path.join(
