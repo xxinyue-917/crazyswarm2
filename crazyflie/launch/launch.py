@@ -22,10 +22,8 @@ def parse_yaml(context):
 
     with open(server_yaml, 'r') as ymlfile:
         server_yaml_content = yaml.safe_load(ymlfile)
-    server_yaml_content['/crazyflie_server']['ros__parameters']['robots'] = crazyflies['robots']
-    server_yaml_content['/crazyflie_server']['ros__parameters']['robot_types'] = crazyflies['robot_types']
-    server_yaml_content['/crazyflie_server']['ros__parameters']['all'] = crazyflies['all']
 
+    server_params = [crazyflies] + [server_yaml_content['/crazyflie_server']['ros__parameters']]
     # robot description
     urdf = os.path.join(
         get_package_share_directory('crazyflie'),
@@ -35,33 +33,31 @@ def parse_yaml(context):
     with open(urdf, 'r') as f:
         robot_desc = f.read()
 
-    server_yaml_content['/crazyflie_server']['ros__parameters']['robot_description'] = robot_desc
+    server_params[1]['robot_description'] = robot_desc
 
     # construct motion_capture_configuration
     motion_capture_yaml = os.path.join(
         get_package_share_directory('crazyflie'),
         'config',
         'motion_capture.yaml')
+    
     with open(motion_capture_yaml, 'r') as ymlfile:
         motion_capture_content = yaml.safe_load(ymlfile)
 
-    motion_capture_content['/motion_capture_tracking']['ros__parameters']['rigid_bodies'] = dict()
+    motion_capture_params = motion_capture_content['/motion_capture_tracking']['ros__parameters']
+    motion_capture_params['rigid_bodies'] = dict()
     for key, value in crazyflies['robots'].items():
         type = crazyflies['robot_types'][value['type']]
         if value['enabled'] and type['motion_capture']['enabled']:
-            motion_capture_content['/motion_capture_tracking']['ros__parameters']['rigid_bodies'][key] =  {
+            motion_capture_params['rigid_bodies'][key] =  {
                     'initial_position': value['initial_position'],
                     'marker': type['motion_capture']['marker'],
                     'dynamics': type['motion_capture']['dynamics'],
                 }
 
     # copy relevent settings to server params
-    server_yaml_content['/crazyflie_server']['ros__parameters']['poses_qos_deadline'] = motion_capture_content[
-        '/motion_capture_tracking']['ros__parameters']['topics']['poses']['qos']['deadline']
+    server_params[1]['poses_qos_deadline'] = motion_capture_params['topics']['poses']['qos']['deadline']
     
-    server_parameters = server_yaml_content['/crazyflie_server']['ros__parameters']
-    motion_capture_parameters = motion_capture_content['/motion_capture_tracking']['ros__parameters']
-
     return [
         Node(
             package='motion_capture_tracking',
@@ -69,7 +65,7 @@ def parse_yaml(context):
             condition=IfCondition(PythonExpression(["'", LaunchConfiguration('backend'), "' != 'sim' and '", LaunchConfiguration('mocap'), "' == 'True'"])),
             name='motion_capture_tracking',
             output='screen',
-            parameters= [motion_capture_parameters],
+            parameters= [motion_capture_params],
         ),
         Node(
             package='crazyflie',
@@ -77,7 +73,7 @@ def parse_yaml(context):
             condition=LaunchConfigurationEquals('backend','cflib'),
             name='crazyflie_server',
             output='screen',
-            parameters= [server_parameters],
+            parameters= server_params,
         ),
         Node(
             package='crazyflie',
@@ -85,7 +81,7 @@ def parse_yaml(context):
             condition=LaunchConfigurationEquals('backend','cpp'),
             name='crazyflie_server',
             output='screen',
-            parameters= [server_parameters],
+            parameters= server_params,
             prefix=PythonExpression(['"xterm -e gdb -ex run --args" if ', LaunchConfiguration('debug'), ' else ""']),
         ),
         Node(
@@ -95,7 +91,7 @@ def parse_yaml(context):
             name='crazyflie_server',
             output='screen',
             emulate_tty=True,
-            parameters= [server_parameters],
+            parameters= server_params,
         )]
 
 def generate_launch_description():
