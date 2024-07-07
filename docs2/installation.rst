@@ -9,6 +9,8 @@ Crazyswarm2 runs on **Ubuntu Linux** in one of the following configurations:
 Ubuntu Python   ROS 2
 ------ -------- ------------
 22.04  3.10     Humble, Iron
+------ -------- ------------
+24.04  3.12     Jazzy
 ====== ======== ============
 
 .. warning::
@@ -21,7 +23,7 @@ Ubuntu Python   ROS 2
 First Installation
 ------------------
 
-1. If needed, install ROS 2 using the instructions at https://docs.ros.org/en/galactic/Installation.html or https://docs.ros.org/en/humble/Installation.html.
+1. If needed, install ROS 2 using the instructions at https://docs.ros.org/en/jazzy/Installation.html.
 
 2. Install dependencies
 
@@ -30,7 +32,7 @@ First Installation
         sudo apt install libboost-program-options-dev libusb-1.0-0-dev
         pip3 install rowan nicegui
 
-   Then install the motion capture ROS 2 package (replace DISTRO with your version of ROS, namely humble or iron):
+   Then install the motion capture ROS 2 package (replace DISTRO with your version of ROS, namely humble, iron, or jazzy):
 
     .. code-block:: bash
 

@@ -15,7 +15,7 @@ from collections import defaultdict
 
 
 from crazyflie_interfaces.msg import FullState, Position, Status, TrajectoryPolynomialPiece
-from crazyflie_interfaces.srv import Arm, GoTo, Land,\
+from crazyflie_interfaces.srv import Arm, GoTo, Land, \
     NotifySetpointsStop, StartTrajectory, Takeoff, UploadTrajectory
 from geometry_msgs.msg import Point
 import numpy as np
@@ -160,7 +160,7 @@ class Crazyflie:
                 elif response.values[0].type == ParameterType.PARAMETER_DOUBLE_ARRAY:
                     self.initialPosition = np.array(response.values[0].double_array_value)
                 else:
-                    assert(False)
+                    assert False
 
                 # extract uri
                 self.uri = response.values[1].string_value
