@@ -115,11 +115,12 @@ def generate_launch_description():
         DeclareLaunchArgument('debug', default_value='False'),
         DeclareLaunchArgument('rviz', default_value='False'),
         DeclareLaunchArgument('gui', default_value='True'),
-        DeclareLaunchArgument('teleop', default_value='False'),
+        DeclareLaunchArgument('teleop', default_value='True'),
         DeclareLaunchArgument('mocap', default_value='True'),
         DeclareLaunchArgument('teleop_yaml_file', default_value=''),
         OpaqueFunction(function=parse_yaml),
         Node(
+            condition=LaunchConfigurationEquals('teleop', 'True'),
             package='crazyflie',
             executable='teleop',
             name='teleop',
