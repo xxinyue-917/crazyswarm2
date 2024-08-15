@@ -101,6 +101,11 @@ def generate_launch_description():
         'config',
         'motion_capture.yaml')
 
+    default_rviz_config_path = os.path.join(
+        get_package_share_directory('crazyflie'),
+        'config',
+        'config.rviz')
+
     telop_yaml_path = os.path.join(
         get_package_share_directory('crazyflie'),
         'config',
@@ -111,6 +116,8 @@ def generate_launch_description():
                               default_value=default_crazyflies_yaml_path),
         DeclareLaunchArgument('motion_capture_yaml_file', 
                               default_value=default_motion_capture_yaml_path),
+        DeclareLaunchArgument('rviz_config_file', 
+                              default_value=default_rviz_config_path),
         DeclareLaunchArgument('backend', default_value='cpp'),
         DeclareLaunchArgument('debug', default_value='False'),
         DeclareLaunchArgument('rviz', default_value='False'),
@@ -148,7 +155,7 @@ def generate_launch_description():
             namespace='',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d' + os.path.join(get_package_share_directory('crazyflie'), 'config', 'config.rviz')],
+            arguments=['-d', LaunchConfiguration('rviz_config_file')],
             parameters=[{
                 "use_sim_time": PythonExpression(["'", LaunchConfiguration('backend'), "' == 'sim'"]),
             }]
