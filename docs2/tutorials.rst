@@ -16,8 +16,8 @@ Teleoperation keyboard
 
 We have an example of the telop_twist_keyboard package working together with the crazyflie
 
-First, make sure that the crazyflies.yaml has the right URI and if you are using the `Flow deck <https://www.bitcraze.io/products/flow-deck-v2/>`_ or `any other position system available <https://www.bitcraze.io/documentation/system/positioning//>`_ to the crazyflie.  
-set the controller to 1 (PID). 
+First, make sure that the crazyflies.yaml has the right URI and if you are using the `Flow deck <https://www.bitcraze.io/products/flow-deck-v2/>`_ or `any other position system available <https://www.bitcraze.io/documentation/system/positioning//>`_ to the crazyflie.
+set the controller to 1 (PID).
 
 And if you  have not already, install the teleop package for the keyboard. (replace DISTRO with humble, iron, or jazzy):
 
@@ -39,19 +39,19 @@ in another terminal run:
 
     ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
-Use 't' to take off, and 'b' to land. For the rest, use the instructions of the telop package. 
+Use 't' to take off, and 'b' to land. For the rest, use the instructions of the telop package.
 
 
 Vizualization with RVIZ2
 ------------------------
 
 
-Make sure your crazyflie knows its position, either by a  `flow deck <https://www.bitcraze.io/products/flow-deck-v2/>`_ or `any other position system available <https://www.bitcraze.io/documentation/system/positioning//>`_ to the crazyflie. 
+Make sure your crazyflie knows its position, either by a  `flow deck <https://www.bitcraze.io/products/flow-deck-v2/>`_ or `any other position system available <https://www.bitcraze.io/documentation/system/positioning//>`_ to the crazyflie.
 
 In crazyflie.yaml, make sure that this following is added or uncommented
 
 .. code-block:: bash
-    
+
     all:
     ...
     firmware_logging:
@@ -77,9 +77,9 @@ The crazyflie names should appear with their estimated position.
 
 This RVIZ2 visualization can be done for the default topics:
 
-* 'pose': '/cf1/pose/' Transforms and Pose 
-* 'odom': '/cf1/odom/' Odometry
-* 'scan': '/cf1/scan' Scan
+* 'pose': '/cf231/pose/' Transforms and Pose
+* 'odom': '/cf231/odom/' Odometry
+* 'scan': '/cf231/scan' Scan
 
 Here you can see an example of 5 crazyflies with the Pose default topic enabled, while taking off and landing
 
@@ -132,7 +132,7 @@ And watch the mapping happening in rviz2 while controlling the crazyflie with th
 Mapping with the SLAM toolbox
 -----------------------------
 
-You can connect the Crazyflie through ROS 2 with existing packages like the `SLAM toolbox <https://github.com/SteveMacenski/slam_toolbox/>`_. 
+You can connect the Crazyflie through ROS 2 with existing packages like the `SLAM toolbox <https://github.com/SteveMacenski/slam_toolbox/>`_.
 With a `Flow deck <https://www.bitcraze.io/products/flow-deck-v2/>`_ and `Multi-ranger <https://www.bitcraze.io/products/multi-ranger-deck/>`_
 ) a simple map can be created.
 
@@ -152,7 +152,7 @@ Go to crazyflie/config/crazyflie.yaml, change the URI of the crazyflie to the on
 
 .. code-block:: bash
 
-  cf1:
+  cf231:
     enabled: true
     uri: radio://0/20/2M/E7E7E7E701
 
@@ -205,10 +205,10 @@ Let's first look at the launch file real quick (multiranger_mapping_launch.py):
         ),
         Node(
         parameters=[
-          {'odom_frame': 'odom'},
+          {'odom_frame': 'cf231/odom'},
           {'map_frame': 'map'},
           {'base_frame': 'cf231'},
-          {'scan_topic': '/cf231/scan'},
+          {'scan_topic': 'cf231/scan'},
           {'use_scan_matching': False},
           {'max_laser_range': 3.5},
           {'resolution': 0.1},
@@ -235,7 +235,7 @@ Now startup the crazyflie server with the following example launch file, after s
 .. code-block:: bash
 
     source install/setup.bash
-    ros2 launch crazyflie_examples multiranger_mapping_launch.py 
+    ros2 launch crazyflie_examples multiranger_mapping_launch.py
 
 You should now see the M4 LED blinking green and red and the following appear on the screen:
 
@@ -247,7 +247,7 @@ You should now see the M4 LED blinking green and red and the following appear on
     [INFO] [vel_mux.py-2]: process started with pid [15502]
     [INFO] [async_slam_toolbox_node-3]: process started with pid [15504]
     [async_slam_toolbox_node-3] [INFO] [1664806553.866149124] [slam_toolbox]: Using solver plugin solver_plugins::CeresSolver
-    [vel_mux.py-2] [INFO] [1664806559.174521891] [vel_mux]: Velocity Multiplexer set for /cf1 with height 0.3 m using the /cmd_vel topic
+    [vel_mux.py-2] [INFO] [1664806559.174521891] [vel_mux]: Velocity Multiplexer set for /cf231 with height 0.3 m using the /cmd_vel topic
     [crazyflie_server.py-1] [INFO] [1664806560.043101845] [crazyflie_server]:  radio://0/20/2M/E7E7E7E701 is fully connected!
     [crazyflie_server.py-1] [INFO] [1664806560.044138096] [crazyflie_server]: All Crazyflies are fully connected!
     [crazyflie_server.py-1] [INFO] [1664806560.054259470] [crazyflie_server]:  radio://0/20/2M/E7E7E7E701: commander.enHighLevel is set to 1
@@ -257,7 +257,7 @@ You should now see the M4 LED blinking green and red and the following appear on
     [crazyflie_server.py-1] [INFO] [1664806560.116479518] [crazyflie_server]: radio://0/20/2M/E7E7E7E701 setup logging for scan at freq 10
     [crazyflie_server.py-1] [INFO] [1664806560.118522365] [crazyflie_server]: radio://0/20/2M/E7E7E7E701 setup logging for odom at freq 10
     [crazyflie_server.py-1] [INFO] [1664806560.123137907] [crazyflie_server]: All Crazyflies loggging are initialized
-    [async_slam_toolbox_node-3] [INFO] [1664806560.329904109] [slam_toolbox]: Message Filter dropping message: frame 'cf1' at time 1664806560.232 for reason 'discarding message because the queue is full'
+    [async_slam_toolbox_node-3] [INFO] [1664806560.329904109] [slam_toolbox]: Message Filter dropping message: frame 'cf231' at time 1664806560.232 for reason 'discarding message because the queue is full'
     [async_slam_toolbox_node-3] Info: clipped range threshold to be within minimum and maximum range!
     [async_slam_toolbox_node-3] [WARN] [1664806560.333439709] [slam_toolbox]: maximum laser range setting (3.5 m) exceeds the capabilities of the used Lidar (3.5 m)
     [async_slam_toolbox_node-3] Registering sensor: [Custom Described Lidar]
@@ -305,10 +305,10 @@ and make the crazyflie take off with the 't' key on your keyboard. Now fly aroun
 
 .. note::
 
-    Tip: start with turning slowly with yaw, which should be enough to get most of the room. 
+    Tip: start with turning slowly with yaw, which should be enough to get most of the room.
 
 
-Once you are happy, you can save the map with 'Save Map' in the SLAM toolbox panel, and land the crazyflie with 't' with teleop_twist_keyboard. 
+Once you are happy, you can save the map with 'Save Map' in the SLAM toolbox panel, and land the crazyflie with 't' with teleop_twist_keyboard.
 
 If not, you could tweak with the parameters of  the `SLAM toolbox <https://github.com/SteveMacenski/slam_toolbox/>`_ to get a better result.
 
@@ -322,9 +322,9 @@ Preperation
 ~~~~~~~~~~~
 .. note::
 
-  This tutorial assume you have taken the above mapping tutorial first. 
+  This tutorial assume you have taken the above mapping tutorial first.
 
-Find the all the files that were created by the RVIZ2 slam toolbox plugin, which should be in format \*.yaml, \*.posegraph, \*.data and \*.pgm, and copy them in the /crazyflie_examples/data/ folder. 
+Find the all the files that were created by the RVIZ2 slam toolbox plugin, which should be in format \*.yaml, \*.posegraph, \*.data and \*.pgm, and copy them in the /crazyflie_examples/data/ folder.
 Either you can replace those that are there already ('map.\*'), or call them different and just change the name in the launch file, which will be explain now.
 
 Next, install the Navigation2 Bringup package:
@@ -356,14 +356,14 @@ Let's take a look at the launch file (multiranger_nav3_launch.py):
             output='screen',
             parameters=[{"hover_height": 0.3},
                         {"incoming_twist_topic": "/cmd_vel"},
-                        {"robot_prefix": "/cf1"}]
+                        {"robot_prefix": "/cf231"}]
         ),
         Node(
         parameters=[
-          {'odom_frame': 'odom'},
+          {'odom_frame': 'cf231/odom'},
           {'map_frame': 'map'},
-          {'base_frame': 'cf1'},
-          {'scan_topic': '/cf1/scan'},
+          {'base_frame': 'cf231'},
+          {'scan_topic': '/cf231/scan'},
           {'use_scan_matching': False},
           {'max_laser_range': 3.5},
           {'resolution': 0.1},
@@ -404,23 +404,23 @@ The crazyflie_server, vel_mux and slam toolbox nodes are obviously the same as t
 The next two nodes are new, which are included IncludeLaunchDescription to include other launch files (since these are pretty big).
 
 * Navigation Bringup: 'slam' is set to false since that is already enabled, 'map' includes the yaml file of what was created in the previous mapping tutorial. 'params_file' contains all the parameters that have been altered a bit for the crazyflie.
-* RVIZ2: 'rviz_config' is set to a default rviz2 file of Nav2 that saves us the trouble of setting everything up by hand. 
+* RVIZ2: 'rviz_config' is set to a default rviz2 file of Nav2 that saves us the trouble of setting everything up by hand.
 
 Navigate the Crazyflie
 ~~~~~~~~~~~~~~~~~~~~~~
 
-In a terminal run the following from the ROS 2 workspace. 
+In a terminal run the following from the ROS 2 workspace.
 
 .. code-block:: bash
 
     source install/setup.bash
-    ros2 launch crazyflie_examples multiranger_nav2_launch.py 
+    ros2 launch crazyflie_examples multiranger_nav2_launch.py
 
 We will not now show all the print-outs, just make sure that at the crazyflie is connected and it outputs the right transforms and topics like in the mapping tutorial
 
 Now, open another terminal and open up a teleop_twist_keyboard just like last time. Press 't' on your keyboard to make the crazyflie fly.
 
-On top of the RVIZ2 window, you see the button 'Nav2 goal'. Click at in a free spot in the map and watch the crazyflie go places :). 
+On top of the RVIZ2 window, you see the button 'Nav2 goal'. Click at in a free spot in the map and watch the crazyflie go places :).
 
 Also try it out by putting obstacles along the path of the crazyflie like in the video here.
 
