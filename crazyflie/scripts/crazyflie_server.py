@@ -571,7 +571,7 @@ class CrazyflieServer(Node):
 
         t_base = TransformStamped()
         t_base.header.stamp = self.get_clock().now().to_msg()
-        t_base.header.frame_id = 'odom'
+        t_base.header.frame_id = cf_name +'/odom'
         t_base.child_frame_id = cf_name
         t_base.transform.translation.x = x
         t_base.transform.translation.y = y

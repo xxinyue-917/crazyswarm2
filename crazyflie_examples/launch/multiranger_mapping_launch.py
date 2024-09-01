@@ -46,7 +46,7 @@ def generate_launch_description():
         ),
         Node(
             parameters=[
-                {'odom_frame': 'odom'},
+                {'odom_frame': 'cf231/odom'},
                 {'map_frame': 'map'},
                 {'base_frame': 'cf231'},
                 {'scan_topic': '/cf231/scan'},
