@@ -375,6 +375,10 @@ class CrazyflieServer(Node):
             self.time_all_crazyflie_connected = self.get_clock().now().nanoseconds * 1e-9
             self.get_logger().info(f"All Crazyflies are connected! It took {self.time_all_crazyflie_connected - self.time_open_link} seconds")
             self._init_logging()
+            if not self.swarm.query_all_values_on_connect:
+                self._init_parameters()
+                self.add_on_set_parameters_callback(self._parameters_callback)
+
         else:
             return
 
@@ -392,8 +396,9 @@ class CrazyflieServer(Node):
         if self.swarm.fully_connected_crazyflie_cnt == len(self.cf_dict) - 1:
             self.time_all_crazyflie_connected = self.get_clock().now().nanoseconds * 1e-9
             self.get_logger().info(f"All Crazyflies are fully connected! It took {self.time_all_crazyflie_connected - self.time_open_link} seconds")
-            self._init_parameters()
-            self.add_on_set_parameters_callback(self._parameters_callback)
+            if self.swarm.query_all_values_on_connect:            
+                self._init_parameters()
+                self.add_on_set_parameters_callback(self._parameters_callback)
 
         else:
             return
