@@ -121,14 +121,19 @@ class CrazyflieServer(Node):
         factory = CachedCfFactory(rw_cache="./cache")
         self.swarm = Swarm(self.uris, factory=factory)
         self.swarm.fully_connected_crazyflie_cnt = 0
+        self.swarm.connected_crazyflie_cnt = 0
+
+        # Check if parameter values needs to be uploaded and put on ROS 2 params
+        self.swarm.query_all_values_on_connect = self._ros_parameters["robots"]["firmware_params"]["query_all_values_on_connect"]
 
         # Initialize logging, services and parameters for each crazyflie
         for link_uri in self.uris:
 
             # Connect callbacks for different connection states of the crazyflie
             self.swarm._cfs[link_uri].cf.fully_connected.add_callback(
-                self._fully_connected
-            )
+                self._fully_connected)
+            self.swarm._cfs[link_uri].cf.connected.add_callback(
+                self._connected)     
             self.swarm._cfs[link_uri].cf.disconnected.add_callback(
                 self._disconnected)
             self.swarm._cfs[link_uri].cf.connection_failed.add_callback(
@@ -210,6 +215,7 @@ class CrazyflieServer(Node):
 
         # Now all crazyflies are initialized, open links!
         try:
+            self.time_open_link = self.get_clock().now().nanoseconds * 1e-9
             self.swarm.open_links()
         except Exception as e:
             # Close node if one of the Crazyflies can not be found
@@ -356,11 +362,27 @@ class CrazyflieServer(Node):
                 else:
                     t = t.setdefault(part, {})
         return tree
+    
+    def _connected(self, link_uri):
+        """
+        Called when all parameters have been updated
+          and the toc has been received of the Crazyflie
+        """
+        self.get_logger().info(f"[{self.cf_dict[link_uri]}] is connected!")
+        self.swarm.connected_crazyflie_cnt += 1
+
+        if self.swarm.connected_crazyflie_cnt == len(self.cf_dict) - 1:
+            self.time_all_crazyflie_connected = self.get_clock().now().nanoseconds * 1e-9
+            self.get_logger().info(f"All Crazyflies are connected! It took {self.time_all_crazyflie_connected - self.time_open_link} seconds")
+            self._init_logging()
+        else:
+            return
+
 
     def _fully_connected(self, link_uri):
         """
         Called when all parameters have been updated
-          and the full log toc has been received of the Crazyflie
+          and the full log toc and parameter values has been received of the Crazyflie
         """
         self.get_logger().info(f"[{self.cf_dict[link_uri]}] is fully connected!")
 
@@ -368,10 +390,11 @@ class CrazyflieServer(Node):
 
         # use len(self.cf_dict) - 1, since cf_dict contains "all" as well
         if self.swarm.fully_connected_crazyflie_cnt == len(self.cf_dict) - 1:
-            self.get_logger().info("All Crazyflies are fully connected!")
+            self.time_all_crazyflie_connected = self.get_clock().now().nanoseconds * 1e-9
+            self.get_logger().info(f"All Crazyflies are fully connected! It took {self.time_all_crazyflie_connected - self.time_open_link} seconds")
             self._init_parameters()
-            self._init_logging()
             self.add_on_set_parameters_callback(self._parameters_callback)
+
         else:
             return
 
@@ -619,7 +642,7 @@ class CrazyflieServer(Node):
         Once custom log block is retrieved from the Crazyflie, 
             send out the ROS 2 topic for that same type of log
         """
-        set_param_all = False
+        set_param_to_ROS = self.swarm.query_all_values_on_connect
         for link_uri in self.uris:
             cf = self.swarm._cfs[link_uri].cf
 
@@ -663,44 +686,35 @@ class CrazyflieServer(Node):
                         self.get_logger().info(
                             f"[{self.cf_dict[link_uri]}] {name} is set to {set_param_value}"
                         )
-                        self.declare_parameter(
-                            self.cf_dict[link_uri] +
-                            ".params." + group + "." + param,
-                            value=set_param_value,
-                            descriptor=parameter_descriptor,
-                        )
+                        if set_param_to_ROS:
+                            self.declare_parameter(
+                                self.cf_dict[link_uri] +
+                                ".params." + group + "." + param,
+                                value=set_param_value,
+                                descriptor=parameter_descriptor,
+                            )
 
                     else:
                         # If value is not found in initial parameter set
                         # get crazyflie paramter value and declare that value in ROS 2 parameter
+                        # Only do this if this has been indicated by the user
+                        if set_param_to_ROS is True:
 
-                        if cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_INTEGER:
-                            cf_param_value = int(cf.param.get_value(name))
-                        elif cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_DOUBLE:
-                            cf_param_value = float(cf.param.get_value(name))
+                            if cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_INTEGER:
+                                cf_param_value = int(cf.param.get_value(name))
+                            elif cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_DOUBLE:
+                                cf_param_value = float(cf.param.get_value(name))
 
-                        self.declare_parameter(
-                            self.cf_dict[link_uri] +
-                            ".params." + group + "." + param,
-                            value=cf_param_value,
-                            descriptor=parameter_descriptor,
-                        )
-                    # Use set_param_all to set a parameter based on the toc of the first crazyflie
-                    if cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_INTEGER:
-                        cf_param_value = int(cf.param.get_value(name))
-                    elif cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_DOUBLE:
-                        cf_param_value = float(cf.param.get_value(name))
-                    if set_param_all is False:
-                        self.declare_parameter(
-                            "all.params." + group + "." + param,
-                            value=cf_param_value,
-                            descriptor=parameter_descriptor,
-                        )
-
-            # Now all parameters are set
-            set_param_all = True
+                            self.declare_parameter(
+                                self.cf_dict[link_uri] +
+                                ".params." + group + "." + param,
+                                value=cf_param_value,
+                                descriptor=parameter_descriptor,
+                                )
 
         self.get_logger().info("All Crazyflies parameters are initialized.")
+
+        
 
     def _parameters_callback(self, params):
         """
