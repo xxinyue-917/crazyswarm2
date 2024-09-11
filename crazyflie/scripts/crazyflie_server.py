@@ -365,8 +365,8 @@ class CrazyflieServer(Node):
     
     def _connected(self, link_uri):
         """
-        Called when all parameters have been updated
-          and the toc has been received of the Crazyflie
+        Called when the toc of the parameters and
+         logs has been received of the Crazyflie
         """
         self.get_logger().info(f"[{self.cf_dict[link_uri]}] is connected!")
         self.swarm.connected_crazyflie_cnt += 1
@@ -385,8 +385,8 @@ class CrazyflieServer(Node):
 
     def _fully_connected(self, link_uri):
         """
-        Called when all parameters have been updated
-          and the full log toc and parameter values has been received of the Crazyflie
+        Called the full log toc and parameter +  values
+          has been received from the Crazyflie
         """
         self.get_logger().info(f"[{self.cf_dict[link_uri]}] is fully connected!")
 
