@@ -701,7 +701,6 @@ class CrazyflieServer(Node):
                         # set crazyflie firmware value and declare value in ROS 2 parameter
                         # Note: currently this is not possible to get the most recent from the
                         #       crazyflie with get_value due to threading.
-                        print(type_cf_param_to_index[type_cf_param])
                         cf.param.set_value_raw(name, type_cf_param_to_index[type_cf_param], param_value)
                         self.get_logger().info(
                             f"[{self.cf_dict[link_uri]}] {name} is set to {param_value}"
