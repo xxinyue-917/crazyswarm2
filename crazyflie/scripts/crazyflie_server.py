@@ -2,7 +2,7 @@
 
 """
 A crazyflie server for communicating with several crazyflies
-    based on the official crazyflie python library from 
+    based on the official crazyflie python library from
     Bitcraze AB
 
 
@@ -42,7 +42,7 @@ from tf2_ros import TransformBroadcaster
 from functools import partial
 from math import degrees, radians, pi, isnan
 
-cf_log_to_ros_param = {
+type_cf_param_to_ros_param = {
     "uint8_t": ParameterType.PARAMETER_INTEGER,
     "uint16_t": ParameterType.PARAMETER_INTEGER,
     "uint32_t": ParameterType.PARAMETER_INTEGER,
@@ -52,6 +52,20 @@ cf_log_to_ros_param = {
     "FP16": ParameterType.PARAMETER_DOUBLE,
     "float": ParameterType.PARAMETER_DOUBLE,
     "double": ParameterType.PARAMETER_DOUBLE,
+}
+
+type_cf_param_to_index = {
+    'uint8_t': 0x08,
+    'uint16_t': 0x09,
+    'uint32_t': 0x0A,
+    'uint64_t': 0x0B,
+    'int8_t': 0x00,
+    'int16_t': 0x01,
+    'int32_t': 0x02,
+    'int64_t': 0x03,
+    'FP16': 0x05,
+    'float': 0x06,
+    'double': 0x07
 }
 
 
@@ -124,7 +138,7 @@ class CrazyflieServer(Node):
         self.swarm.connected_crazyflie_cnt = 0
 
         # Check if parameter values needs to be uploaded and put on ROS 2 params
-        self.swarm.query_all_values_on_connect = self._ros_parameters["robots"]["firmware_params"]["query_all_values_on_connect"]
+        self.swarm.query_all_values_on_connect = self._ros_parameters["firmware_params"]["query_all_values_on_connect"]
 
         # Initialize logging, services and parameters for each crazyflie
         for link_uri in self.uris:
@@ -133,7 +147,7 @@ class CrazyflieServer(Node):
             self.swarm._cfs[link_uri].cf.fully_connected.add_callback(
                 self._fully_connected)
             self.swarm._cfs[link_uri].cf.connected.add_callback(
-                self._connected)     
+                self._connected)
             self.swarm._cfs[link_uri].cf.disconnected.add_callback(
                 self._disconnected)
             self.swarm._cfs[link_uri].cf.connection_failed.add_callback(
@@ -298,7 +312,7 @@ class CrazyflieServer(Node):
         self.create_service(GoTo, "all/go_to", self._go_to_callback)
         self.create_service(
             StartTrajectory, "all/start_trajectory", self._start_trajectory_callback)
-        
+
         # This is the last service to announce and can be used to check if the server is fully available
         self.create_service(Empty, "all/emergency", self._emergency_callback)
 
@@ -362,7 +376,7 @@ class CrazyflieServer(Node):
                 else:
                     t = t.setdefault(part, {})
         return tree
-    
+
     def _connected(self, link_uri):
         """
         Called when the toc of the parameters and
@@ -396,7 +410,7 @@ class CrazyflieServer(Node):
         if self.swarm.fully_connected_crazyflie_cnt == len(self.cf_dict) - 1:
             self.time_all_crazyflie_connected = self.get_clock().now().nanoseconds * 1e-9
             self.get_logger().info(f"All Crazyflies are fully connected! It took {self.time_all_crazyflie_connected - self.time_open_link} seconds")
-            if self.swarm.query_all_values_on_connect:            
+            if self.swarm.query_all_values_on_connect:
                 self._init_parameters()
                 self.add_on_set_parameters_callback(self._parameters_callback)
 
@@ -485,7 +499,7 @@ class CrazyflieServer(Node):
 
     def _log_scan_data_callback(self, timestamp, data, logconf, uri):
         """
-        Once multiranger range is retrieved from the Crazyflie, 
+        Once multiranger range is retrieved from the Crazyflie,
             send out the ROS 2 topic for Scan
         """
         cf_name = self.cf_dict[uri]
@@ -517,7 +531,7 @@ class CrazyflieServer(Node):
 
     def _log_pose_data_callback(self, timestamp, data, logconf, uri):
         """
-        Once pose data is retrieved from the Crazyflie, 
+        Once pose data is retrieved from the Crazyflie,
             send out the ROS 2 topic for Pose
         """
 
@@ -558,7 +572,7 @@ class CrazyflieServer(Node):
 
     def _log_odom_data_callback(self, timestamp, data, logconf, uri):
         """
-        Once pose and velocity data is retrieved from the Crazyflie, 
+        Once pose and velocity data is retrieved from the Crazyflie,
             send out the ROS 2 topic for Odometry in 2D (no z-axis)
         """
         cf_name = self.cf_dict[uri]
@@ -627,7 +641,7 @@ class CrazyflieServer(Node):
 
     def _log_custom_data_callback(self, timestamp, data, logconf, uri):
         """
-        Once custom log block is retrieved from the Crazyflie, 
+        Once custom log block is retrieved from the Crazyflie,
             send out the ROS 2 topic for that same type of log
         """
         msg = LogDataGeneric()
@@ -644,7 +658,7 @@ class CrazyflieServer(Node):
 
     def _init_parameters(self):
         """
-        Once custom log block is retrieved from the Crazyflie, 
+        Once custom log block is retrieved from the Crazyflie,
             send out the ROS 2 topic for that same type of log
         """
         set_param_to_ROS = self.swarm.query_all_values_on_connect
@@ -661,41 +675,42 @@ class CrazyflieServer(Node):
                     elem = p_toc[group][param]
                     type_cf_param = elem.ctype
                     parameter_descriptor = ParameterDescriptor(
-                        type=cf_log_to_ros_param[type_cf_param])
+                        type=type_cf_param_to_ros_param[type_cf_param])
 
                     # Check ros parameters if an parameter should be set
                     #   Parameter sets for individual robots has priority,
                     #   then robot types, then all (all robots)
-                    set_param_value = None
+                    param_value = None
                     try:
-                        set_param_value = self._ros_parameters["all"]["firmware_params"][group][param]
+                        param_value = self._ros_parameters["all"]["firmware_params"][group][param]
                     except KeyError:
                         pass
                     try:
-                        set_param_value = self._ros_parameters["robot_types"][self.cf_dict[link_uri]
+                        param_value = self._ros_parameters["robot_types"][self.cf_dict[link_uri]
                                                                               ]["firmware_params"][group][param]
                     except KeyError:
                         pass
                     try:
-                        set_param_value = self._ros_parameters["robots"][self.cf_dict[link_uri]
+                        param_value = self._ros_parameters["robots"][self.cf_dict[link_uri]
                                                                          ]["firmware_params"][group][param]
                     except KeyError:
                         pass
 
-                    if set_param_value is not None:
+                    if param_value is not None:
                         # If value is found in initial parameters,
                         # set crazyflie firmware value and declare value in ROS 2 parameter
                         # Note: currently this is not possible to get the most recent from the
                         #       crazyflie with get_value due to threading.
-                        cf.param.set_value(name, set_param_value)
+                        print(type_cf_param_to_index[type_cf_param])
+                        cf.param.set_value_raw(name, type_cf_param_to_index[type_cf_param], param_value)
                         self.get_logger().info(
-                            f"[{self.cf_dict[link_uri]}] {name} is set to {set_param_value}"
+                            f"[{self.cf_dict[link_uri]}] {name} is set to {param_value}"
                         )
                         if set_param_to_ROS:
                             self.declare_parameter(
                                 self.cf_dict[link_uri] +
                                 ".params." + group + "." + param,
-                                value=set_param_value,
+                                value=param_value,
                                 descriptor=parameter_descriptor,
                             )
 
@@ -705,9 +720,9 @@ class CrazyflieServer(Node):
                         # Only do this if this has been indicated by the user
                         if set_param_to_ROS is True:
 
-                            if cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_INTEGER:
+                            if type_cf_param_to_ros_param[type_cf_param] is ParameterType.PARAMETER_INTEGER:
                                 cf_param_value = int(cf.param.get_value(name))
-                            elif cf_log_to_ros_param[type_cf_param] is ParameterType.PARAMETER_DOUBLE:
+                            elif type_cf_param_to_ros_param[type_cf_param] is ParameterType.PARAMETER_DOUBLE:
                                 cf_param_value = float(cf.param.get_value(name))
 
                             self.declare_parameter(
@@ -718,8 +733,6 @@ class CrazyflieServer(Node):
                                 )
 
         self.get_logger().info("All Crazyflies parameters are initialized.")
-
-        
 
     def _parameters_callback(self, params):
         """
@@ -776,7 +789,7 @@ class CrazyflieServer(Node):
 
     def _takeoff_callback(self, request, response, uri="all"):
         """
-        Service callback to take the crazyflie land to 
+        Service callback to take the crazyflie land to
             a certain height in high level commander
         """
 
@@ -803,7 +816,7 @@ class CrazyflieServer(Node):
 
     def _land_callback(self, request, response, uri="all"):
         """
-        Service callback to make the crazyflie land to 
+        Service callback to make the crazyflie land to
             a certain height in high level commander
         """
         duration = float(request.duration.sec) + \
@@ -827,7 +840,7 @@ class CrazyflieServer(Node):
 
     def _go_to_callback(self, request, response, uri="all"):
         """
-        Service callback to have the crazyflie go to 
+        Service callback to have the crazyflie go to
             a certain position in high level commander
         """
         duration = float(request.duration.sec) + \
@@ -966,7 +979,7 @@ class CrazyflieServer(Node):
         """
         Topic update callback to the motion capture lib's
            poses topic to send through the external position
-           to the crazyflie 
+           to the crazyflie
         """
 
         poses = msg.poses
@@ -1023,7 +1036,7 @@ class CrazyflieServer(Node):
         pitch_rate =  msg.twist.angular.y
         yaw_rate = msg.twist.angular.z
         self.swarm._cfs[uri].cf.commander.send_full_state_setpoint(pos, vel, acc, q, roll_rate, pitch_rate, yaw_rate)
-        
+
     def _remove_logging(self, request, response, uri="all"):
         """
         Service callback to remove logging blocks of the crazyflie
