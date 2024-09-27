@@ -15,6 +15,9 @@ def generate_launch_description():
             '/launch.py']),
         launch_arguments={
             'backend': 'cflib',
+            'gui': 'false',
+            'teleop': 'false',
+            'mocap': 'false',
             }.items())
 
     crazyflie_name = '/cf231'

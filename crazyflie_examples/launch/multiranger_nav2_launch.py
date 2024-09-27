@@ -15,7 +15,9 @@ def generate_launch_description():
             '/launch.py']),
         launch_arguments={
             'backend': 'cflib',
-            'world_tf_name': 'map',
+            'gui': 'false',
+            'teleop': 'false',
+            'mocap': 'false',
             }.items())
 
     cf_examples_dir = get_package_share_directory('crazyflie_examples')
