@@ -107,7 +107,7 @@ class CrazyflieServer(Node):
                                 "odom": self._log_odom_data_callback,
                                 "status": self._log_status_data_callback}
 
-        self.world_tf_name = "world"
+        self.world_tf_name = "map"
         try:
             self.world_tf_name = self._ros_parameters["world_tf_name"]
         except KeyError:
