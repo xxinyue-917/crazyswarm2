@@ -42,7 +42,7 @@ It also setups several flight command services:
 - **Takeoff / Land / GoTo**: With a single service command and a given height or coordinate, you can make the connected crazyflies take off, go to a position and land.
 - **Upload / Start trajectory**: You can upload a predefined trajectory and indicate if the Crazyflies need to start flying it.
 - **Emergency** : To turn off the motors in case something goes wrong.
-- **/all or /cf2** : The services are setup either for all crazyflies to respond to, or each individual crazyflie, depended on the prefix. 
+- **/all or /cf2** : The services are setup either for all crazyflies to respond to, or each individual crazyflie, depended on the prefix.
 
 Simulation
 ----------
@@ -103,5 +103,5 @@ Support functionality with backends
 +---------------------+---------+-----------+---------+
 | Misc                                                |
 +---------------------+---------+-----------+---------+
-| - Arming            | Yes     | No        | n/a     |
+| - Arming            | Yes     | Yes        | n/a     |
 +---------------------+---------+-----------+---------+
