@@ -533,7 +533,11 @@ class CrazyflieServer(Node):
         msg.angle_min = -0.5 * 2 * pi
         msg.angle_max = 0.25 * 2 * pi
         msg.angle_increment = 1.0 * pi/2
-        self.swarm._cfs[uri].logging["scan_publisher"].publish(msg)
+        try:
+            self.swarm._cfs[uri].logging["scan_publisher"].publish(msg)
+        except:
+            self.get_logger().info("Could not publish scan message, stopping scan log")
+            self.swarm._cfs[uri].logging["scan_log_config"].stop()
 
     def _log_pose_data_callback(self, timestamp, data, logconf, uri):
         """
@@ -561,7 +565,11 @@ class CrazyflieServer(Node):
         msg.pose.orientation.y = q[1]
         msg.pose.orientation.z = q[2]
         msg.pose.orientation.w = q[3]
-        self.swarm._cfs[uri].logging["pose_publisher"].publish(msg)
+        try:
+            self.swarm._cfs[uri].logging["pose_publisher"].publish(msg)
+        except:
+            self.get_logger().info("Could not publish pose message, stopping pose log")
+            self.swarm._cfs[uri].logging["pose_log_config"].stop()
 
         t_base = TransformStamped()
         t_base.header.stamp = self.get_clock().now().to_msg()
@@ -574,7 +582,10 @@ class CrazyflieServer(Node):
         t_base.transform.rotation.y = q[1]
         t_base.transform.rotation.z = q[2]
         t_base.transform.rotation.w = q[3]
-        self.tfbr.sendTransform(t_base)
+        try:
+            self.tfbr.sendTransform(t_base)
+        except:
+            self.get_logger().info("Could not publish pose tf")
 
     def _log_odom_data_callback(self, timestamp, data, logconf, uri):
         """
@@ -615,7 +626,11 @@ class CrazyflieServer(Node):
         msg.twist.twist.angular.y = pitchrate
         msg.twist.twist.angular.x = rollrate
 
-        self.swarm._cfs[uri].logging["odom_publisher"].publish(msg)
+        try:
+            self.swarm._cfs[uri].logging["odom_publisher"].publish(msg)
+        except:
+            self.get_logger().info("Could not publish odom message, stopping odom log")
+            self.swarm._cfs[uri].logging["odom_log_config"].stop()
 
         t_base = TransformStamped()
         t_base.header.stamp = self.get_clock().now().to_msg()
@@ -628,7 +643,11 @@ class CrazyflieServer(Node):
         t_base.transform.rotation.y = q[1]
         t_base.transform.rotation.z = q[2]
         t_base.transform.rotation.w = q[3]
-        self.tfbr.sendTransform(t_base)
+
+        try:
+            self.tfbr.sendTransform(t_base)
+        except:
+            self.get_logger().info("Could not publish odom tf")
 
     def _log_status_data_callback(self, timestamp, data, logconf, uri):
         """
@@ -643,7 +662,11 @@ class CrazyflieServer(Node):
         msg.pm_state = data.get('pm.state')
         msg.rssi = data.get('radio.rssi')
 
-        self.swarm._cfs[uri].logging["status_publisher"].publish(msg)
+        try:
+            self.swarm._cfs[uri].logging["status_publisher"].publish(msg)
+        except:
+            self.get_logger().info("Could not publish status message, stopping status log")
+            self.swarm._cfs[uri].logging["status_log_config"].stop()
 
     def _log_custom_data_callback(self, timestamp, data, logconf, uri):
         """
@@ -656,8 +679,12 @@ class CrazyflieServer(Node):
         for log_name in data:
             msg.values.append(data.get(log_name))
 
-        self.swarm._cfs[uri].logging["custom_log_publisher"][logconf.name].publish(
+        try:
+            self.swarm._cfs[uri].logging["custom_log_publisher"][logconf.name].publish(
             msg)
+        except:
+            self.get_logger().info("Could not publish custom {logconf.name} message, stopping custom log")
+            self.swarm._cfs[uri].logging["custom_log_groups"][logconf.name]["log_config"].stop()
 
     def _log_error_callback(self, logconf, msg):
         print('Error when logging %s: %s' % (logconf.name, msg))
