@@ -58,10 +58,16 @@ First Installation
     .. code-block:: bash
 
         cd ../
+        source /opt/ros/DISTRO/setup.bash
         colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
     .. note::
        symlink-install allows you to edit Python and config files without running `colcon build` every time.
+
+    .. note::
+       If you install it for the first time, you will see a lot of warnings at first. 
+       As long as the build of the package finish, you can ignore this for now. 
+       
 
 5. Set up Crazyradio
 
@@ -106,6 +112,7 @@ You can update your local copy using the following commands:
     git submodule sync
     git submodule update --init --recursive
     cd ../../
+    source /opt/ros/DISTRO/setup.bash
     colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 
