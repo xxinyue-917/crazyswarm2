@@ -140,7 +140,9 @@ class CrazyflieSIL:
                     firm.mkvec(*goal),
                     yaw, duration, self.time_func())
             except TypeError:
-                print("Warning: Your Crazyflie firmware is outdated. Please update to the latest version.")
+                message = ('Warning: Your Crazyflie firmware is outdated. '
+                           ' Please update to the latest version.')
+                print(message)
                 firm.plan_go_to(
                     self.planner,
                     relative,
