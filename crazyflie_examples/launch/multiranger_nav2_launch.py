@@ -39,7 +39,7 @@ def generate_launch_description():
                 'use_sim_time': 'False',
             }.items()
         ),
-                IncludeLaunchDescription(
+        IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(get_package_share_directory('nav2_bringup'), 'launch/bringup_launch.py')),
             launch_arguments={
@@ -54,7 +54,7 @@ def generate_launch_description():
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(get_package_share_directory('nav2_bringup'), 'launch/rviz_launch.py')),
+            os.path.join(get_package_share_directory('nav2_bringup'), 'launch/rviz_launch.py')),
             launch_arguments={
                 'rviz_config': os.path.join(
                     get_package_share_directory('nav2_bringup'), 'rviz', 'nav2_default_view.rviz')}.items())
