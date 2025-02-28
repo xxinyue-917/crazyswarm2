@@ -9,7 +9,8 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    crazyflie = IncludeLaunchDescription(
+    return LaunchDescription([
+        IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('crazyflie'), 'launch'),
             '/launch.py']),
@@ -18,10 +19,7 @@ def generate_launch_description():
             'gui': 'false',
             'teleop': 'false',
             'mocap': 'false',
-            }.items())
-
-    return LaunchDescription([
-        crazyflie,
+            }.items()),
         Node(
             package='crazyflie',
             executable='vel_mux.py',

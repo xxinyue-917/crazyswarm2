@@ -9,7 +9,10 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    crazyflie = IncludeLaunchDescription(
+    map_name = 'map'
+
+    return LaunchDescription([
+        IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('crazyflie'), 'launch'),
             '/launch.py']),
@@ -18,16 +21,7 @@ def generate_launch_description():
             'gui': 'false',
             'teleop': 'false',
             'mocap': 'false',
-            }.items())
-
-    cf_examples_dir = get_package_share_directory('crazyflie_examples')
-    bringup_dir = get_package_share_directory('nav2_bringup')
-    bringup_launch_dir = os.path.join(bringup_dir, 'launch')
-    map_name = 'map'
-
-    return LaunchDescription([
-
-        crazyflie,
+            }.items()),
         Node(
             package='crazyflie',
             executable='vel_mux.py',
@@ -45,14 +39,14 @@ def generate_launch_description():
                 'use_sim_time': 'False',
             }.items()
         ),
-        IncludeLaunchDescription(
+                IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(bringup_launch_dir, 'bringup_launch.py')),
+                os.path.join(get_package_share_directory('nav2_bringup'), 'launch/bringup_launch.py')),
             launch_arguments={
                 'slam': 'False',
                 'use_sim_time': 'False',
-                'map': cf_examples_dir + '/data/' + map_name + '.yaml',
-                'params_file': os.path.join(cf_examples_dir, 'config/nav2_params.yaml'),
+                'map': get_package_share_directory('crazyflie_examples') + '/data/' + map_name + '.yaml',
+                'params_file': os.path.join(get_package_share_directory('crazyflie_examples'), 'config/nav2_params.yaml'),
                 'autostart': 'True',
                 'use_composition': 'True',
                 'transform_publish_period': '0.02'
@@ -60,8 +54,8 @@ def generate_launch_description():
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(bringup_launch_dir, 'rviz_launch.py')),
+                os.path.join(get_package_share_directory('nav2_bringup'), 'launch/rviz_launch.py')),
             launch_arguments={
                 'rviz_config': os.path.join(
-                    bringup_dir, 'rviz', 'nav2_default_view.rviz')}.items())
+                    get_package_share_directory('nav2_bringup'), 'rviz', 'nav2_default_view.rviz')}.items())
     ])
