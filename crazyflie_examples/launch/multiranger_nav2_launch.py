@@ -33,20 +33,26 @@ def generate_launch_description():
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(get_package_share_directory('slam_toolbox'), 'launch/online_async_launch.py')),
+                os.path.join(get_package_share_directory('slam_toolbox'),
+                'launch/online_async_launch.py')),
             launch_arguments={
-                'slam_params_file': os.path.join(get_package_share_directory('crazyflie_examples'), 'config/slam_params.yaml'),
+                'slam_params_file': os.path.join(
+                get_package_share_directory('crazyflie_examples'),
+                'config/slam_params.yaml'),
                 'use_sim_time': 'False',
             }.items()
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(get_package_share_directory('nav2_bringup'), 'launch/bringup_launch.py')),
+                os.path.join(get_package_share_directory('nav2_bringup'),
+                'launch/bringup_launch.py')),
             launch_arguments={
                 'slam': 'False',
                 'use_sim_time': 'False',
-                'map': get_package_share_directory('crazyflie_examples') + '/data/' + map_name + '.yaml',
-                'params_file': os.path.join(get_package_share_directory('crazyflie_examples'), 'config/nav2_params.yaml'),
+                'map': get_package_share_directory('crazyflie_examples') + '/data/' +
+                 map_name + '.yaml',
+                'params_file': os.path.join(get_package_share_directory('crazyflie_examples'),
+                'config/nav2_params.yaml'),
                 'autostart': 'True',
                 'use_composition': 'True',
                 'transform_publish_period': '0.02'
@@ -57,5 +63,6 @@ def generate_launch_description():
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch/rviz_launch.py')),
             launch_arguments={
                 'rviz_config': os.path.join(
-                    get_package_share_directory('nav2_bringup'), 'rviz', 'nav2_default_view.rviz')}.items())
+                    get_package_share_directory('nav2_bringup'), 'rviz',
+                    'nav2_default_view.rviz')}.items())
     ])

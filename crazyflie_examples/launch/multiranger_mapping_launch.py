@@ -31,9 +31,11 @@ def generate_launch_description():
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(get_package_share_directory('slam_toolbox'), 'launch/online_async_launch.py')),
+                os.path.join(get_package_share_directory('slam_toolbox'), 
+                                                         'launch/online_async_launch.py')),
             launch_arguments={
-                'slam_params_file': os.path.join(get_package_share_directory('crazyflie_examples'), 'config/slam_params.yaml'),
+                'slam_params_file': os.path.join(get_package_share_directory('crazyflie_examples'),
+                'config/slam_params.yaml'),
                 'use_sim_time': 'False',
             }.items()
         ),
