@@ -215,6 +215,8 @@ Let's first look at the launch file real quick (multiranger_mapping_launch.py):
               }.items()
           ),
       ])
+
+      
 Here is an explanation of the nodes:
 
 * The first node enables the crazyflie server, namely the python version (cflib) as that currently has logging enabled. This takes the crazyflies.yaml file you just edited and uses those values to set up the crazyflie. You might need to change some topic strings based on your Crazyflie name (`/cf231` to something else)
