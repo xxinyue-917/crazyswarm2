@@ -2,11 +2,12 @@
 robots:
   cf231:
     enabled: true
-    uri: radio://0/80/2M/E7E7E7E7E7
+    id: 1
+    uri: radio://0/1/2M/E7E7E7E7E7
     initial_position: [0.0, 0.0, 0.0]
     type: cf21  # see robot_types
     # firmware_params:
-    #   kalman:
+    #   kalma1
     #     pNAcc_xy: 1.0 # default 0.5
     # firmware_logging:
     #   enabled: true
@@ -14,6 +15,14 @@ robots:
     #     topic_name3: 
     #       frequency: 1
     #       vars: ["acc.x", "acc.y"]
+
+  cf232:
+    enabled: true
+    id: 2
+    uri: radio://0/2/2M/E7E7E7E7E7
+    initial_position: [0.0, 0.5, 0.0]
+    type: cf21  # see robot_types
+
   cf5:
     enabled: false
     uri: radio://0/80/2M/E7E7E7E705
