@@ -1,8 +1,7 @@
 # named list of all robots
 robots:
-  cf231:
+  drone1:
     enabled: true
-    id: 1
     uri: radio://0/1/2M/E7E7E7E7E7
     initial_position: [0.0, 0.0, 0.0]
     type: cf21  # see robot_types
@@ -16,16 +15,15 @@ robots:
     #       frequency: 1
     #       vars: ["acc.x", "acc.y"]
 
-  cf232:
+  drone2:
     enabled: true
-    id: 2
     uri: radio://0/2/2M/E7E7E7E7E7
     initial_position: [0.0, 0.5, 0.0]
     type: cf21  # see robot_types
 
-  cf5:
-    enabled: false
-    uri: radio://0/80/2M/E7E7E7E705
+  drone3:
+    enabled: true
+    uri: radio://0/3/2M/E7E7E7E7E7
     initial_position: [0.0, -0.5, 0.0]
     type: cf21  # see robot_types
     # firmware_params:
@@ -36,11 +34,24 @@ robots:
     #    topic_name3: 
     #      frequency: 1
     #      vars: ["acc.x", "acc.y", "acc.z"]
+
+  drone4:
+    enabled: true
+    uri: radio://0/4/2M/E7E7E7E7E7
+    initial_position: [0.5, 0.0, 0.0]
+    type: cf21  # see robot_types
+
+  drone5:
+    enabled: true
+    uri: radio://0/5/2M/E7E7E7E7E7
+    initial_position: [-0.5, 0.0, 0.0]
+    type: cf21  # see robot_types
+
 # Definition of the various robot types
 robot_types:
   cf21:
     motion_capture:
-      enabled: true
+      enabled: false
       # only if enabled; see motion_capture.yaml
       marker: default_single_marker
       dynamics: default
@@ -102,7 +113,7 @@ all:
       enHighLevel: 1
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
-      controller: 2 # 1: PID, 2: mellinger
+      controller: 1 # 1: PID, 2: mellinger
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color
