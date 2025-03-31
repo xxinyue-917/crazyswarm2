@@ -18,13 +18,13 @@ robots:
   drone2:
     enabled: true
     uri: radio://0/2/2M/E7E7E7E7E7
-    initial_position: [0.0, 0.5, 0.0]
+    initial_position: [0.0, -0.5, 0.0]
     type: cf21  # see robot_types
 
   drone3:
     enabled: true
     uri: radio://0/3/2M/E7E7E7E7E7
-    initial_position: [0.0, -0.5, 0.0]
+    initial_position: [0.0, 0.5, 0.0]
     type: cf21  # see robot_types
     # firmware_params:
     #   kalman:
@@ -36,13 +36,13 @@ robots:
     #      vars: ["acc.x", "acc.y", "acc.z"]
 
   drone4:
-    enabled: true
+    enabled: false
     uri: radio://0/4/2M/E7E7E7E7E7
     initial_position: [0.5, 0.0, 0.0]
     type: cf21  # see robot_types
 
   drone5:
-    enabled: true
+    enabled: false
     uri: radio://0/5/2M/E7E7E7E7E7
     initial_position: [-0.5, 0.0, 0.0]
     type: cf21  # see robot_types

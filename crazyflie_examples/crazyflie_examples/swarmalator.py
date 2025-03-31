@@ -4,11 +4,6 @@
 Swarmalator implementation for Crazyswarm2.
 This script implements the static sync collective behavior of the Swarmalator model
 on multiple Crazyflie drones.
-
-Reference:
-O'Keeffe, K. P., Hong, H., & Strogatz, S. H. (2017).
-Oscillators that sync and swarm.
-Nature Communications, 8(1), 1504.
 """
 
 import math
@@ -92,36 +87,6 @@ class SwarmalatorController:
         # Take off to the specified height
         self.swarm.allcfs.takeoff(targetHeight=self.height, duration=2.0)
         self.timeHelper.sleep(2.0)
-        
-        # # Distribute drones in a circle
-        # for i, cf in enumerate(self.crazyflies):
-        #     angle = 2 * np.pi * i / self.num_cfs
-        #     radius = self.radius * 0.7  # Start at 70% of max radius
-            
-        #     # Calculate position (x, y maintain the same z height)
-        #     x = radius * np.cos(angle)
-        #     y = radius * np.sin(angle)
-        #     z = self.height
-            
-        #     # Store initial position
-        #     initial_pos = np.array(cf.initialPosition)
-        #     target_pos = initial_pos + np.array([x, y, z - initial_pos[2]])
-            
-        #     # Send drone to initial position
-        #     cf.goTo(target_pos, 0, 1)
-        
-        # Wait for all drones to reach their positions
-        # self.timeHelper.sleep(0.1)
-        
-        # Record current positions (in simulation these are command positions)
-        # for i, cf in enumerate(self.crazyflies):
-        #     # In a real implementation, you would get actual positions from motion capture
-        #     # Here we just use the commanded positions
-        #     self.positions[i] = np.array(cf.initialPosition) + np.array([
-        #         self.radius * 0.7 * np.cos(2 * np.pi * i / self.num_cfs),
-        #         self.radius * 0.7 * np.sin(2 * np.pi * i / self.num_cfs),
-        #         self.height - cf.initialPosition[2]
-        #     ])
 
     def update_leds(self):
         """Update LED colors based on the phase of each Crazyflie."""
@@ -217,11 +182,6 @@ class SwarmalatorController:
 
     def update_positions_from_lighthouse(self):
         """Update the positions using actual data from positioning system."""
-        # In simulation mode, we don't do anything here since positions are synthetic
-        if self.is_simulation:
-            return
-            
-        # In hardware mode, try to get real position data if available
         try:
             for i, cf in enumerate(self.crazyflies):
                 # Try to get position from status if available
@@ -419,36 +379,30 @@ class SwarmalatorController:
                 # Update LEDs based on phases (less frequently to reduce CPU load)
                 if self.position_update_counter == 0:
                     self.update_leds()
-                
-                # Update target positions based on current dynamics
-                self.update_target_positions(pos_derivatives)
-                
-                # If continuous updates are disabled, send commands here
-                if not self.continuous_position_update:
-                    with self.position_lock:
-                        # Use velocity control with cmdFullState
-                        for i, cf in enumerate(self.crazyflies):
-                            # Get the velocity we calculated
-                            vx = self.velocities[i][0]
-                            vy = self.velocities[i][1]
-                            vz = 0.0  # Maintain altitude
-                            
-                            # Get current position
-                            current_pos = self.positions[i].copy()
-                            
-                            # Zero acceleration and angular velocity (except yaw if needed)
-                            acc = [0.0, 0.0, 0.0]
-                            yaw = 0.0  # Current yaw or desired yaw
-                            omega = [0.0, 0.0, 0.0]  # No angular velocity
-                            
-                            # Send full state command with velocity
-                            cf.cmdFullState(
-                                current_pos,  # Current position
-                                [vx, vy, vz],  # Desired velocity
-                                acc,  # Zero acceleration
-                                yaw,  # Current yaw
-                                omega  # No angular velocity
-                            )
+
+                # Use velocity control with cmdFullState
+                for i, cf in enumerate(self.crazyflies):
+                    # Get the velocity we calculated
+                    vx = self.velocities[i][0]
+                    vy = self.velocities[i][1]
+                    vz = 0.0  # Maintain altitude
+                    
+                    # Get current position
+                    current_pos = self.positions[i].copy()
+                    
+                    # Zero acceleration and angular velocity (except yaw if needed)
+                    acc = [0.0, 0.0, 0.0]
+                    yaw = 0.0  # Current yaw or desired yaw
+                    omega = [0.0, 0.0, 0.0]  # No angular velocity
+                    
+                    # Send full state command with velocity
+                    cf.cmdFullState(
+                        current_pos,  # Current position
+                        [vx, vy, vz],  # Desired velocity
+                        acc,  # Zero acceleration
+                        yaw,  # Current yaw
+                        omega  # No angular velocity
+                    )
                 
                 # Calculate actual loop execution time
                 execution_time = time.time() - loop_start
