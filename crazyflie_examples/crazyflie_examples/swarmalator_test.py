@@ -11,10 +11,11 @@ class Swarmalator:
         # Initialization variables
         self.botRad = 0.15
         self.height = 1.0
+        self.dt = 0.1
         self.A = 1
-        self.B = 3
+        self.B = 0.8
         self.J = 1
-        self.K = 1
+        self.K = 5
 
         # Parameters for the swarmalator
         self.swarm = Crazyswarm()
@@ -25,6 +26,8 @@ class Swarmalator:
         # Store the position and phase information
         self.positions = np.zeros((self.numBots, 3))
         self.phases = np.zeros(self.numBots)
+        self.dPos = np.zeros((self.numBots, 3))
+        self.dPhase = np.zeros(self.numBots)
 
         # Initialize the positions and phases
         self.initialize_positions()
@@ -63,7 +66,7 @@ class Swarmalator:
         self.timeHelper.sleep(2.5)  # Wait for landing to complete
         print("All Crazyflies landed safely")
 
-    def run(self, duration=15):
+    def run(self, duration=60):
         """Run the swarmalator algorithm"""
         self.running = True
         
@@ -76,8 +79,52 @@ class Swarmalator:
         start_time = time.time()
         try:
             while self.running and (time.time() - start_time < duration):
-                # Your algorithm logic here
-                self.timeHelper.sleep(0.1)
+                # Implement the swarmalator algorithm here
+                for i in range(self.numBots):
+                    # Initialize the derivatives
+                    self.dPos[i] = np.zeros(3)
+                    self.dPhase[i] = 0
+
+                    # Compute the derivatives
+                    for j in range(self.numBots):
+                        if i != j:
+                            # Compute the distance between the two bots (In 2D here)
+                            dx = self.positions[j][0] - self.positions[i][0]
+                            dy = self.positions[j][1] - self.positions[i][1]
+                            dist = np.sqrt(dx**2 + dy**2)
+                            # Calculate the absolute distance between the two bots
+                            if dist < 2*self.botRad:
+                                d = dist - 2*self.botRad
+                            else:
+                                d = dist*0.2    # This is to avoid the bots to collide
+                            
+                            # Compute the attractive force
+                            F_attr = ( self.A + self.J*np.cos(self.phases[j] - self.phases[i]) )/dist
+                            F_rep = self.B/(dist*d)
+                            F_total = F_attr - F_rep
+
+                            # Compute the velocity
+                            self.dPos[i][0] += F_total * dx
+                            self.dPos[i][1] += F_total * dy
+
+                            # Compute the phase attraction
+                            self.dPhase[i] += self.K * np.sin(self.phases[j] - self.phases[i])/dist
+
+                # Update the positions and phases
+                for i in range(self.numBots):
+                    # Update the position
+                    self.positions[i][0] += self.dPos[i][0] * self.dt / self.numBots
+                    self.positions[i][1] += self.dPos[i][1] * self.dt / self.numBots
+                    self.positions[i][2] = self.height
+
+                    # Regularize and update the phase
+                    self.phases[i] += self.dPhase[i] * self.dt / self.numBots
+                    self.phases[i] = np.mod(self.phases[i], 2*np.pi)
+
+                    # Update the Crazyflie
+                    self.crazyflies.crazyflies[i].goTo(self.positions[i], 0, self.dt)
+
+                # self.timeHelper.sleep(0.1)
             
             # If we exit normally (not by button press), land the Crazyflies
             if self.running:
@@ -97,8 +144,6 @@ def check_for_keypress():
 
 def main():
     swarmalator = Swarmalator()
-    swarmalator.initialize_positions()
-    swarmalator.initialize_phases()
     swarmalator.run()
     swarmalator.stop_and_land()
 
