@@ -9,15 +9,15 @@ from crazyflie_py import Crazyswarm
 class Swarmalator:
     def __init__(self):
         # Initialization variables
-        self.botRad = 0.15
+        self.botRad = 0.05
         self.height = 0.5
         self.minVel = -0.5
         self.maxVel = 0.5
         self.dt = 0.1
         self.A = 1
-        self.B = 0.8
-        self.J = 1
-        self.K = 5
+        self.B = 1
+        self.J = 3
+        self.K = 1
 
         # Parameters for the swarmalator
         self.swarm = Crazyswarm()
@@ -118,16 +118,16 @@ class Swarmalator:
                     # Update the position
                     self.dPos[i][0] = max(self.minVel, min(self.dPos[i][0], self.maxVel))
                     self.dPos[i][1] = max(self.minVel, min(self.dPos[i][1], self.maxVel))
-                    print("dPos of Drone: ", i, " is: ", self.dPos[i])
+                    # print("dPos of Drone: ", i, " is: ", self.dPos[i])
                     self.positions[i][0] += self.dPos[i][0] * self.dt / self.numBots
                     self.positions[i][1] += self.dPos[i][1] * self.dt / self.numBots
                     self.positions[i][2] = self.height
-                    print("Position of Drone: ", i, " is: ", self.positions[i])
+                    # print("Position of Drone: ", i, " is: ", self.positions[i])
 
                     # Regularize and update the phase
                     self.phases[i] += self.dPhase[i] * self.dt / self.numBots
                     self.phases[i] = np.mod(self.phases[i], 2*np.pi)
-                    print("Phase of Drone: ", i, " is: ", self.phases[i])
+                    # print("Phase of Drone: ", i, " is: ", self.phases[i])
                     # Update the Crazyflie
                     # self.crazyflies.crazyflies[i].cmdFullState(
                     #     self.positions[i],

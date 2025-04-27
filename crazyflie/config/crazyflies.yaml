@@ -22,7 +22,7 @@ robots:
     type: cf21  # see robot_types
 
   drone3:
-    enabled: true
+    enabled: false
     uri: radio://0/3/2M/E7E7E7E7E7
     initial_position: [0.0, 0.5, 0.0]
     type: cf21  # see robot_types
@@ -36,15 +36,15 @@ robots:
     #      vars: ["acc.x", "acc.y", "acc.z"]
 
   drone4:
-    enabled: false
+    enabled: true
     uri: radio://0/4/2M/E7E7E7E7E7
-    initial_position: [0.5, 0.0, 0.0]
+    initial_position: [-0.5, 0.0, 0.0]
     type: cf21  # see robot_types
 
   drone5:
-    enabled: false
+    enabled: true
     uri: radio://0/5/2M/E7E7E7E7E7
-    initial_position: [-0.5, 0.0, 0.0]
+    initial_position: [0.0, -0.5, 0.0]
     type: cf21  # see robot_types
 
 # Definition of the various robot types
