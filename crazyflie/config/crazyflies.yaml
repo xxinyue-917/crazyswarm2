@@ -1,7 +1,13 @@
 # named list of all robots
 robots:
-  drone1:
+  drone0:
     enabled: true
+    uri: radio://0/80/2M/E7E7E7E7E7
+    initial_position: [1.0, 0.0, 0.0]
+    type: cf21  # see robot_types
+
+  drone1:
+    enabled: false
     uri: radio://0/1/2M/E7E7E7E7E7
     initial_position: [0.0, 0.0, 0.0]
     type: cf21  # see robot_types
@@ -16,7 +22,7 @@ robots:
     #       vars: ["acc.x", "acc.y"]
 
   drone2:
-    enabled: true
+    enabled: false
     uri: radio://0/2/2M/E7E7E7E7E7
     initial_position: [0.5, 0.0, 0.0]
     type: cf21  # see robot_types
@@ -36,13 +42,13 @@ robots:
     #      vars: ["acc.x", "acc.y", "acc.z"]
 
   drone4:
-    enabled: true
+    enabled: false
     uri: radio://0/4/2M/E7E7E7E7E7
     initial_position: [-0.5, 0.0, 0.0]
     type: cf21  # see robot_types
 
   drone5:
-    enabled: true
+    enabled: false
     uri: radio://0/5/2M/E7E7E7E7E7
     initial_position: [0.0, -0.5, 0.0]
     type: cf21  # see robot_types
