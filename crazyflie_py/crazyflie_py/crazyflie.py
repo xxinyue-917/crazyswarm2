@@ -27,6 +27,9 @@ import rclpy.node
 import rowan
 from std_srvs.srv import Empty
 
+from tf2_ros import TransformListener, Buffer
+from geometry_msgs.msg import TransformStamped
+
 
 def arrayToGeometryPoint(a):
     result = Point()
@@ -112,7 +115,9 @@ class Crazyflie:
         self.prefix = prefix
         self.node = node
 
-        # self.tf = tf
+        # # self.tf = tf
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self.node)
 
         self.emergencyService = node.create_client(Empty, prefix + '/emergency')
         self.emergencyService.wait_for_service()
@@ -485,23 +490,34 @@ class Crazyflie:
         req.arm = arm
         self.armService.call_async(req)
 
-    # def position(self):
-    #     """Returns the last true position measurement from motion capture.
+    def position(self):
+        """Returns the last true position measurement from motion capture.
 
-    #     If at least one position measurement for this robot has been received
-    #     from the motion capture system since startup, this function returns
-    #     immediately with the most recent measurement. However, if **no**
-    #     position measurements have been received, it blocks until the first
-    #     one arrives.
+        If at least one position measurement for this robot has been received
+        from the motion capture system since startup, this function returns
+        immediately with the most recent measurement. However, if **no**
+        position measurements have been received, it blocks until the first
+        one arrives.
 
-    #     Returns:
-    #         position (np.array[3]): Current position. Meters.
-    #     """
-    #     self.tf.waitForTransform(
-    #       '/world', '/cf' + str(self.id), rospy.Time(0), rospy.Duration(10))
-    #     position, quaternion = self.tf.lookupTransform(
-    #       '/world', '/cf' + str(self.id), rospy.Time(0))
-    #     return np.array(position)
+        Returns:
+            position (np.array[3]): Current position. Meters.
+        """
+        # self.tf.waitForTransform(
+        #   '/world', '/cf' + str(self.id), rospy.Time(0), rospy.Duration(10))
+        # position, quaternion = self.tf.lookupTransform(
+        #   '/world', '/cf' + str(self.id), rospy.Time(0))
+        try:
+            now = rclpy.time.Time()
+            trans = self.tf_buffer.lookup_transform('world', self.prefix[1:], now)
+            x = trans.transform.translation.x
+            y = trans.transform.translation.y
+            z = trans.transform.translation.z
+            return x, y, z
+            # self.get_logger().info(f'{self.prefix[1:]} position -> x: {x:.2f}, y: {y:.2f}, z: {z:.2f}')
+        except Exception as e:
+            # self.get_logger().warn(f'Could not transform {self.target_frame}: {e}')
+            return 0, 0, 0
+        
 
     def getParam(self, name):
         """
