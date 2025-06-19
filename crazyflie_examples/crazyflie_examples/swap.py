@@ -5,8 +5,8 @@ import numpy as np
 
 
 def main():
-    Id2 = 231
-    Id1 = 5
+    Id2 = 0
+    Id1 = 1
     Pos1 = np.array([0.0, -0.2, 0.0])
     Pos2 = np.array([0.0, 0.2, 0.0])
     Height1 = 0.4

@@ -34,6 +34,10 @@ class LEDController:
         
     def update_LED_color(self):
         for i in range(self.numBots):
+            self.dPhase = 0.1*np.ones(self.numBots)
+            self.phases += self.dPhase
+            # Apply modulo to keep phases in [0, 2π] range
+            self.phases = self.phases % (2 * np.pi)
             # Map phase (0 to 2π) to RGB color
             r = int(128 + 127 * np.cos(self.phases[i]))
             g = int(128 + 127 * np.cos(self.phases[i] + 2*np.pi/3))
@@ -42,12 +46,12 @@ class LEDController:
             self.LED_color[i, 0] = r/255.0
             self.LED_color[i, 1] = g/255.0
             self.LED_color[i, 2] = b/255.0
-            
             self.crazyflies.crazyflies[i].setLEDColor(
                 self.LED_color[i, 0], 
                 self.LED_color[i, 1], 
                 self.LED_color[i, 2]
             )
+            print(i)
         
 def main():
     controller = LEDController()
