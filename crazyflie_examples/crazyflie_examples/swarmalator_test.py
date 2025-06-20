@@ -4,7 +4,11 @@ import time
 import threading
 import sys
 import select
+import csv
+import os
+import rclpy
 from crazyflie_py import Crazyswarm
+from crazyflie_examples.tracking import PositionTracker
 
 class Swarmalator:
     def __init__(self):
@@ -23,9 +27,12 @@ class Swarmalator:
         self.swarm = Crazyswarm()
         self.timeHelper = self.swarm.timeHelper
         self.crazyflies = self.swarm.allcfs
+        self.tracker = self.swarm.track
         self.numBots = len(self.crazyflies.crazyflies)
+        self.frame_id = self.crazyflies.crazyfliesByName.keys()
 
         # Store the position and phase information
+        self.status = np.full(self.numBots, False, dtype=bool)
         self.positions = np.zeros((self.numBots, 3))
         self.phases = np.zeros(self.numBots)
         self.dPos = np.zeros((self.numBots, 3))
@@ -39,12 +46,18 @@ class Swarmalator:
         self.running = False
 
     def initialize_positions(self):
-        self.crazyflies.takeoff(targetHeight=self.height, duration=1.0+self.height)
-        self.timeHelper.sleep(1.5+self.height)
+        print("waiting for the tf positions to be published")
+        
+        time.sleep(1)
+
+        self.update_positions()
+        
+        print("Starting to take off")
         for i, cf in enumerate(self.crazyflies.crazyflies):
-            pos = np.array(cf.initialPosition) + np.array([0, 0, self.height])
-            cf.goTo(pos, 0, 1.0)
-            self.positions[i] = pos
+            print("taking off")
+            # cf.goTo(self.positions[i], 0, 1.0)
+        # self.crazyflies.takeoff(targetHeight=self.height, duration=1.0+self.height)
+        # self.timeHelper.sleep(1.5+self.height)
 
     def initialize_phases(self):
         # self.phases = np.linspace(0, 2*np.pi, self.numBots)
@@ -69,7 +82,42 @@ class Swarmalator:
         self.timeHelper.sleep(2.5)  # Wait for landing to complete
         print("All Crazyflies landed safely")
 
-    def run(self, duration=60):
+    def update_positions(self):
+        for i, frame in enumerate(self.frame_id):
+            pos = self.tracker.get_position(to_frame=frame)
+            if pos:
+                x, y, z = pos
+                self.status[i] = True
+                self.positions[i] = [x, y, z]
+                print("controlled", self.positions[i])
+            else:
+                self.status[i] = False
+                print("lost_control")
+
+    def update_LED_color(self):
+        for i in range(self.numBots):
+            r = int(128 + 127 * np.cos(self.phases[i])) / 255.0
+            g = int(128 + 127 * np.cos(self.phases[i] + 2*np.pi/3)) / 255.0
+            b = int(128 + 127 * np.cos(self.phases[i] + 4*np.pi/3)) / 255.0
+            self.crazyflies.crazyflies[i].setLEDColor(r, g, b)
+
+
+    def save_position(self):
+        filename = "positions.csv"
+        write_header = not os.path.exists(filename)
+
+        with open(filename, "a", newline="") as f:
+            writer = csv.writer(f)
+            if write_header:
+                writer.writerow(["timestamp", "index", "x", "y", "z", "status"])
+            for i in range(self.numBots):
+                timestamp = time.time()  # current time in seconds since epoch
+                x, y, z = self.positions[i]
+                writer.writerow([timestamp, i, x, y, z, self.status[i]])
+
+        # print("Saved to:", os.path.abspath(filename))
+
+    def run(self, duration=30):
         """Run the swarmalator algorithm"""
         self.running = True
         
@@ -82,14 +130,24 @@ class Swarmalator:
         start_time = time.time()
         try:
             while self.running and (time.time() - start_time < duration):
+                # update positions:
+                rclpy.spin_once(self.tracker, timeout_sec=0.01)
+                self.update_positions()
+                self.save_position()
+
                 # Implement the swarmalator algorithm here
                 for i in range(self.numBots):
+                    if not self.status[i]:
+                        # self.crazyflies.crazyflies[i].land(targetHeight=0.04, duration=1)
+                        continue
                     # Initialize the derivatives
                     self.dPos[i] = np.zeros(3)
                     self.dPhase[i] = 0
 
                     # Compute the derivatives
                     for j in range(self.numBots):
+                        if not self.status[i]:
+                            continue
                         if i != j:
                             # Compute the distance between the two bots (In 2D here)
                             dx = self.positions[j][0] - self.positions[i][0]
@@ -136,8 +194,9 @@ class Swarmalator:
                     #     0,
                     #     np.array([0.0, 0.0, 0.0])
                     # )
-                    self.crazyflies.crazyflies[i].goTo(self.positions[i], 0, 0.1)
+                    # self.crazyflies.crazyflies[i].goTo(self.positions[i], 0, 0.1)
 
+                # self.update_LED_color()
                 self.timeHelper.sleep(0.1)
             
             # If we exit normally (not by button press), land the Crazyflies
@@ -148,6 +207,7 @@ class Swarmalator:
             # Also handle Ctrl+C
             print("Program interrupted! Emergency landing...")
             self.stop_and_land()
+            self.tracker.shutdown()
         
 def check_for_keypress():
     """Non-blocking keyboard check"""

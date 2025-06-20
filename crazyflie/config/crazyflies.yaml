@@ -2,7 +2,7 @@
 robots:
   drone0:
     enabled: true
-    uri: radio://0/80/2M/E7E7E7E7E7
+    uri: radio://0/2/2M/E7E7E7E7E6
     initial_position: [1.0, 0.0, 0.0]
     type: cf21  # see robot_types
 
@@ -105,10 +105,10 @@ all:
         frequency: 10 # Hz
       status:
         frequency: 1 # Hz
-    #custom_topics:
+    # custom_topics:
     #  topic_name1:
-    #    frequency: 10 # Hz
-    #    vars: ["stateEstimateZ.x", "stateEstimateZ.y", "stateEstimateZ.z", "pm.vbat"]
+      #  frequency: 10 # Hz
+      #  vars: ["stateEstimateZ.x", "stateEstimateZ.y", "stateEstimateZ.z", "pm.vbat"]
     #  topic_name2:
     #    frequency: 1 # Hz
     #    vars: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw"]

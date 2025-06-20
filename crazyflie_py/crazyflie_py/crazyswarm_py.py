@@ -1,16 +1,16 @@
 import rclpy
 
 from . import genericJoystick
-from .crazyflie import CrazyflieServer, TimeHelper, PositionTracker
+import threading
+from .crazyflie import CrazyflieServer, TimeHelper, TFPositionNode
 
 
 class Crazyswarm:
 
     def __init__(self):
         rclpy.init()
-
+        print("started")
         self.allcfs = CrazyflieServer()
-        self.tracker = PositionTracker('my_position_tracker')
         self.timeHelper = TimeHelper(self.allcfs)
-
+        self.track = TFPositionNode()
         self.input = genericJoystick.Joystick(self.timeHelper)
