@@ -14,6 +14,8 @@ from collections import defaultdict
 # from .visualizer import visNull
 
 
+
+
 from crazyflie_interfaces.msg import FullState, Position, Status, TrajectoryPolynomialPiece
 from crazyflie_interfaces.srv import Arm, GoTo, Land, \
     NotifySetpointsStop, StartTrajectory, Takeoff, UploadTrajectory
@@ -29,6 +31,12 @@ from std_srvs.srv import Empty
 
 from tf2_ros import TransformListener, Buffer
 from geometry_msgs.msg import TransformStamped
+
+from tf2_msgs.msg import TFMessage
+import threading
+import time
+from typing import Dict, Tuple, Optional, List
+from rclpy.node import Node
 
 
 def arrayToGeometryPoint(a):
@@ -490,33 +498,33 @@ class Crazyflie:
         req.arm = arm
         self.armService.call_async(req)
 
-    def position(self):
-        """Returns the last true position measurement from motion capture.
+    # def position(self):
+    #     """Returns the last true position measurement from motion capture.
 
-        If at least one position measurement for this robot has been received
-        from the motion capture system since startup, this function returns
-        immediately with the most recent measurement. However, if **no**
-        position measurements have been received, it blocks until the first
-        one arrives.
+    #     If at least one position measurement for this robot has been received
+    #     from the motion capture system since startup, this function returns
+    #     immediately with the most recent measurement. However, if **no**
+    #     position measurements have been received, it blocks until the first
+    #     one arrives.
 
-        Returns:
-            position (np.array[3]): Current position. Meters.
-        """
-        # self.tf.waitForTransform(
-        #   '/world', '/cf' + str(self.id), rospy.Time(0), rospy.Duration(10))
-        # position, quaternion = self.tf.lookupTransform(
-        #   '/world', '/cf' + str(self.id), rospy.Time(0))
-        try:
-            now = rclpy.time.Time()
-            trans = self.tf_buffer.lookup_transform('world', self.prefix[1:], now)
-            x = trans.transform.translation.x
-            y = trans.transform.translation.y
-            z = trans.transform.translation.z
-            return x, y, z
-            # self.get_logger().info(f'{self.prefix[1:]} position -> x: {x:.2f}, y: {y:.2f}, z: {z:.2f}')
-        except Exception as e:
-            # self.get_logger().warn(f'Could not transform {self.target_frame}: {e}')
-            return 0, 0, 0
+    #     Returns:
+    #         position (np.array[3]): Current position. Meters.
+    #     """
+    #     # self.tf.waitForTransform(
+    #     #   '/world', '/cf' + str(self.id), rospy.Time(0), rospy.Duration(10))
+    #     # position, quaternion = self.tf.lookupTransform(
+    #     #   '/world', '/cf' + str(self.id), rospy.Time(0))
+    #     try:
+    #         now = rclpy.time.Time()
+    #         trans = self.tf_buffer.lookup_transform('world', self.prefix[1:], now)
+    #         x = trans.transform.translation.x
+    #         y = trans.transform.translation.y
+    #         z = trans.transform.translation.z
+    #         return x, y, z
+    #         # self.get_logger().info(f'{self.prefix[1:]} position -> x: {x:.2f}, y: {y:.2f}, z: {z:.2f}')
+    #     except Exception as e:
+    #         # self.get_logger().warn(f'Could not transform {self.target_frame}: {e}')
+    #         return 0, 0, 0
         
 
     def getParam(self, name):
@@ -1084,3 +1092,161 @@ class CrazyflieServer(rclpy.node.Node):
         self.cmdFullStateMsg.twist.angular.y = omega[1]
         self.cmdFullStateMsg.twist.angular.z = omega[2]
         self.cmdFullStatePublisher.publish(self.cmdFullStateMsg)
+
+
+
+class PositionTracker(Node):
+    """
+    Lightweight ROS2 node for tracking positions from TF messages.
+    
+    This class runs in a background thread and maintains a dictionary of
+    current positions for all tracked frames.
+    """
+    
+    def __init__(self, node_name: str = 'position_tracker'):
+        """
+        Initialize the position tracker.
+        
+        Args:
+            node_name: Name for the ROS2 node
+        """
+        super().__init__(node_name)
+        
+        # Dictionary to store positions: {frame_id: (x, y, z, timestamp)}
+        self.positions: Dict[str, Tuple[float, float, float, float]] = {}
+        self._lock = threading.Lock()  # Thread-safe access to positions
+        
+        # Create TF subscription
+        self.tf_subscriber = self.create_subscription(
+            TFMessage,
+            '/tf',
+            self.tf_callback,
+            10
+        )
+        
+        # Background spinning
+        self.running = True
+        self.spin_thread = threading.Thread(target=self._spin_worker, daemon=True)
+        self.spin_thread.start()
+        
+        self.get_logger().info(f"Position tracker '{node_name}' started")
+    
+    def tf_callback(self, msg: TFMessage):
+        """
+        Callback for TF messages. Updates position dictionary.
+        
+        Args:
+            msg: TF message containing transforms
+        """
+        current_time = time.time()
+        
+        with self._lock:
+            for transform in msg.transforms:
+                frame_id = transform.child_frame_id
+                translation = transform.transform.translation
+                
+                # Store position with timestamp
+                self.positions[frame_id] = (
+                    translation.x,
+                    translation.y, 
+                    translation.z,
+                    current_time
+                )
+    
+    def _spin_worker(self):
+        """Background worker thread for spinning the node."""
+        while self.running and rclpy.ok():
+            rclpy.spin_once(self, timeout_sec=0.01)
+            time.sleep(0.001)
+    
+    def get_position(self, frame_id: str) -> Optional[Tuple[float, float, float]]:
+        """
+        Get the current position of a specific frame.
+        
+        Args:
+            frame_id: The frame ID to get position for
+            
+        Returns:
+            (x, y, z) tuple if frame exists, None otherwise
+        """
+        with self._lock:
+            if frame_id in self.positions:
+                x, y, z, _ = self.positions[frame_id]
+                return (x, y, z)
+            return None
+    
+    def get_all_positions(self) -> Dict[str, Tuple[float, float, float]]:
+        """
+        Get all current positions.
+        
+        Returns:
+            Dictionary mapping frame_id to (x, y, z) tuples
+        """
+        with self._lock:
+            return {frame_id: (x, y, z) for frame_id, (x, y, z, _) in self.positions.items()}
+    
+    def get_position_with_timestamp(self, frame_id: str) -> Optional[Tuple[float, float, float, float]]:
+        """
+        Get position with timestamp for a specific frame.
+        
+        Args:
+            frame_id: The frame ID to get position for
+            
+        Returns:
+            (x, y, z, timestamp) tuple if frame exists, None otherwise
+        """
+        with self._lock:
+            return self.positions.get(frame_id)
+    
+    def has_position(self, frame_id: str) -> bool:
+        """
+        Check if a frame has been seen.
+        
+        Args:
+            frame_id: The frame ID to check
+            
+        Returns:
+            True if frame has been seen, False otherwise
+        """
+        with self._lock:
+            return frame_id in self.positions
+    
+    def get_tracked_frames(self) -> List[str]:
+        """
+        Get list of all tracked frame IDs.
+        
+        Returns:
+            List of frame IDs currently being tracked
+        """
+        with self._lock:
+            return list(self.positions.keys())
+    
+    def is_position_recent(self, frame_id: str, max_age_seconds: float = 1.0) -> bool:
+        """
+        Check if a position is recent (within max_age_seconds).
+        
+        Args:
+            frame_id: The frame ID to check
+            max_age_seconds: Maximum age in seconds to consider recent
+            
+        Returns:
+            True if position is recent, False otherwise
+        """
+        with self._lock:
+            if frame_id not in self.positions:
+                return False
+            
+            _, _, _, timestamp = self.positions[frame_id]
+            return (time.time() - timestamp) <= max_age_seconds
+    
+    def clear_positions(self):
+        """Clear all stored positions."""
+        with self._lock:
+            self.positions.clear()
+    
+    def shutdown(self):
+        """Shutdown the position tracker cleanly."""
+        self.running = False
+        if self.spin_thread.is_alive():
+            self.spin_thread.join(timeout=1.0)
+        self.get_logger().info("Position tracker shutdown")
