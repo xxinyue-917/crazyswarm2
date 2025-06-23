@@ -1,10 +1,13 @@
+
 import math
 import numpy as np
 import time
 import threading
 import sys
 import select
+import csv
 import cvxpy as cp
+import os
 from crazyflie_py import Crazyswarm
 #note:
 # set up simulation 
@@ -16,7 +19,6 @@ class Swarmalator:
     def __init__(self):
         # Initialization variables
         self.botRad = 0.05
-        self.numBots = len(self.crazyflies.crazyflies)
         self.plotXLimit = 2.15
         self.plotYLimit = 3.25
         self.plotZLimit = 1
@@ -26,6 +28,12 @@ class Swarmalator:
         self.J = 3
         self.K = 1
 
+        # Parameters for the swarmalator
+        self.swarm = Crazyswarm()
+        self.timeHelper = self.swarm.timeHelper
+        self.crazyflies = self.swarm.allcfs
+        self.numBots = len(self.crazyflies.crazyflies)
+
         # Initialization of variables for each bot
         self.positions = np.zeros((self.numBots, 3))
         self.phases = np.zeros(self.numBots)
@@ -33,10 +41,6 @@ class Swarmalator:
         self.dPos = np.zeros((self.numBots, 3))
         self.dPhase = np.zeros(self.numBots)
         self.final_vel = np.zeros((self.numBots, 3))
-        # Parameters for the swarmalator
-        self.swarm = Crazyswarm()
-        self.timeHelper = self.swarm.timeHelper
-        self.crazyflies = self.swarm.allcfs
         
 
         # Initialization of obstacles
@@ -62,11 +66,6 @@ class Swarmalator:
         self.a = 2.0 * self.botRad # x–axis radius
         self.b = 2.0 * self.botRad # y–axis radius
         self.c = 6.0 * self.botRad # z–axis radius
-
-        # Initialize the positions and phases
-        self.initialize_positions()
-        self.initialize_phases()
-        self.initialize_trajectory()
         
         # Flag to control execution
         self.running = False
@@ -75,6 +74,11 @@ class Swarmalator:
         self.height = 0.5
         self.minVel = -0.5
         self.maxVel = 0.5
+
+        # Initialize the positions and phases
+        self.initialize_positions()
+        self.initialize_phases()
+        self.initialize_trajectory()
 
     def initialize_trajectory(self):
         for t in range(self.final_time_step):
@@ -218,7 +222,7 @@ class Swarmalator:
             A_cbf_obs = []
             b_cbf_obs = []
 
-            for j in self.numObstacles:
+            for j in range(self.numObstacles):
                 ox = self.obstacles[j][0]
                 oy = self.obstacles[j][1]
                 oz = self.obstacles[j][2]
@@ -239,7 +243,7 @@ class Swarmalator:
             A_cbf_all = []
             b_cbf_all = []
 
-            for j in self.numBots:
+            for j in range(self.numBots):
                 if j != i:
                     # Location of each agent 
                     obsX = self.positions[j][0]
@@ -276,10 +280,14 @@ class Swarmalator:
                 [ 0,  0,  1,  0],
                 [ 0,  0, -1,  0]
             ])
+            # print("Shape b_clf:", b_clf)
+            # print("Shape b_cbf_obs:", b_cbf_obs)
+            # print("Shape b_cbf_all:", b_cbf_all)
+            # print("Shape np.full((6, 1), v_max):", np.full((6, 1), v_max))
             b_1 = np.vstack([
-                b_clf,
-                b_cbf_obs,
-                b_cbf_all,
+                np.atleast_2d(b_clf).T,
+                np.atleast_2d(b_cbf_obs).T,
+                np.atleast_2d(b_cbf_all).T,
                 np.full((6, 1), v_max)
             ])
             H = np.array([
@@ -321,7 +329,21 @@ class Swarmalator:
             self.final_vel[i][1] = self.dPos[i][1] + ctrlY
             self.final_vel[i][2] = self.dPos[i][2] + ctrlZ
 
-    def run(self, duration=60):
+    def save_position(self):
+        filename = f"A_{self.A}_B_{self.B}_K{self.K}_J{self.J}_numBots{self.numBots}.csv"
+        write_header = not os.path.exists(filename)
+
+        with open(filename, "a", newline="") as f:
+            writer = csv.writer(f)
+            if write_header:
+                writer.writerow(["index", "x", "y", "z"])
+            for i in range(self.numBots):
+                x, y, z = self.positions[i]
+                writer.writerow([i, x, y, z])
+
+        # print("Saved to:", os.path.abspath(filename))
+
+    def run(self, duration=30):
         """Run the swarmalator algorithm"""
         self.running = True
         
@@ -338,11 +360,11 @@ class Swarmalator:
                 self.swarmalator_model()
                 self.clf_cbf()
                 self.update_positions()
-                for i in self.numBots:
+                for i in range(self.numBots):
                     self.crazyflies.crazyflies[i].goTo(self.positions[i], 0, 0.1)
 
                 self.timeHelper.sleep(0.1)
-            
+                self.save_position()
             # If we exit normally (not by button press), land the Crazyflies
             if self.running:
                 self.stop_and_land()
@@ -366,3 +388,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

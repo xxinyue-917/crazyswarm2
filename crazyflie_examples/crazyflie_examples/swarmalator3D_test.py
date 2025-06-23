@@ -10,7 +10,7 @@ from crazyflie_py import Crazyswarm
 class Swarmalator:
    def __init__(self):
        # Initialization variables
-       self.botRad = 0.05
+       self.botRad = 0.9
        self.numBots = len(self.crazyflies.crazyflies)
        self.plotXLimit = 2.15
        self.plotYLimit = 3.25
@@ -18,8 +18,8 @@ class Swarmalator:
        self.dt = 0.1
        self.A = 1
        self.B = 1
-       self.J = 3
-       self.K = 1
+       self.J = 1
+       self.K = 0
 
 
        # Initialization of variables for each bot
@@ -45,12 +45,10 @@ class Swarmalator:
        # Initialize trajectory
        self.final_time_step = 2000
        self.traj = np.zeros((self.final_time_step, 3))
-       self.trajx_start = 0.25
-       self.trajy_start = -0.25
+       self.trajx_start = 1.5
+       self.trajy_start = -0.95
        self.trajx_end = 3
        self.trajy_end = -2
-
-
 
 
        # Initialize the positions and phases
@@ -89,7 +87,7 @@ class Swarmalator:
        self.timeHelper.sleep(1.5+self.height)
        for i, cf in enumerate(self.crazyflies.crazyflies):
            pos = np.array(cf.initialPosition) + np.array([0, 0, self.height])
-           cf.goTo(pos, 0, 1.0)
+           cf.goTo(pos, 0, 0.5)
            self.positions[i] = pos
 
 

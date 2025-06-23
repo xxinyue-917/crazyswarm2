@@ -2,13 +2,13 @@
 robots:
   drone0:
     enabled: true
-    uri: radio://0/2/2M/E7E7E7E7E6
-    initial_position: [1.0, 0.0, 0.0]
+    uri: radio://0/1/2M/E7E7E7E7E8
+    initial_position: [1.5, -0.95, 0.0]
     type: cf21  # see robot_types
 
   drone1:
     enabled: false
-    uri: radio://0/1/2M/E7E7E7E7E7
+    uri: radio://0/1/2M/E7E7E7E7E6
     initial_position: [0.0, 0.0, 0.0]
     type: cf21  # see robot_types
     # firmware_params:
@@ -22,15 +22,15 @@ robots:
     #       vars: ["acc.x", "acc.y"]
 
   drone2:
-    enabled: false
-    uri: radio://0/2/2M/E7E7E7E7E7
-    initial_position: [0.5, 0.0, 0.0]
+    enabled: true
+    uri: radio://0/1/2M/E7E7E7E7E7
+    initial_position: [2.10, -0.52, 0.0]
     type: cf21  # see robot_types
 
   drone3:
-    enabled: false
-    uri: radio://0/3/2M/E7E7E7E7E7
-    initial_position: [0.0, 0.5, 0.0]
+    enabled: true
+    uri: radio://0/2/2M/E7E7E7E7E6
+    initial_position: [1.56, -1.44, 0.0]
     type: cf21  # see robot_types
     # firmware_params:
     #   kalman:
@@ -42,14 +42,20 @@ robots:
     #      vars: ["acc.x", "acc.y", "acc.z"]
 
   drone4:
-    enabled: false
-    uri: radio://0/4/2M/E7E7E7E7E7
-    initial_position: [-0.5, 0.0, 0.0]
+    enabled: true
+    uri: radio://0/2/2M/E7E7E7E7E8
+    initial_position: [2.19, -1.4, 0.0]
     type: cf21  # see robot_types
 
   drone5:
+    enabled: true
+    uri: radio://0/3/2M/E7E7E7E7E6
+    initial_position: [1.02, -1.0, 0.0]
+    type: cf21  # see robot_types
+
+  drone6:
     enabled: false
-    uri: radio://0/5/2M/E7E7E7E7E7
+    uri: radio://0/4/2M/E7E7E7E7E7
     initial_position: [0.0, -0.5, 0.0]
     type: cf21  # see robot_types
 
@@ -120,8 +126,8 @@ all:
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
       controller: 1 # 1: PID, 2: mellinger
-    # ring:
-    #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
+    ring:
+      effect: 7 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color
     #   solidGreen: 0 # if set to solid color
     #   solidRed: 0 # if set to solid color
